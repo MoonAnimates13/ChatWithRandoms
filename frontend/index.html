@@ -5,43 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ChatWithRandoms.com</title>
   <style>
-    body { margin:0; font-family: Arial, sans-serif; background:#111; color:#eee; height:100vh; display:flex; justify-content:center; align-items:center; }
-    #container { width:100%; max-width:720px; height:95vh; background:#222; border-radius:10px; overflow:hidden; box-shadow:0 0 20px rgba(0,0,0,0.5); display:flex; flex-direction:column; }
+    body { margin:0; font-family: Arial, sans-serif; background:#111; color:#eee; height:100vh; overflow:hidden; }
+    #container { width:100%; max-width:720px; height:100vh; background:#222; margin:0 auto; display:flex; flex-direction:column; }
     #name-screen { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; }
     #chat { flex:1; display:flex; flex-direction:column; display:none; }
-    #header { background:#1a1a1a; padding:12px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; }
-    #messages { flex:1; list-style:none; padding:15px; margin:0; overflow-y:auto; background:#000; }
-    #messages li { display:flex; align-items:flex-start; margin:12px 0; padding:8px 12px; border-radius:12px; background:#333; max-width:85%; word-wrap:break-word; }
+    #header { background:#1a1a1a; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; font-size:14px; }
+    #messages { flex:1; list-style:none; padding:15px; margin:0; overflow-y:auto; background:#000; scroll-behavior: smooth; }
+    #messages li { display:flex; align-items:flex-start; margin:10px 0; padding:10px 14px; border-radius:12px; background:#333; max-width:85%; word-wrap:break-word; }
     #messages li.me { margin-left:auto; background:#007bff; color:white; }
-    #messages .avatar { width:40px; height:40px; border-radius:50%; margin-right:12px; object-fit:cover; flex-shrink:0; border:2px solid #555; }
-    #messages .content { flex:1; }
-    #messages .username { font-weight:bold; margin-right:8px; }
-    #messages img.chat-img { max-width:280px; border-radius:8px; margin-top:6px; display:block; }
-    #messages .delete-btn { background:none; border:none; color:#ff6b6b; font-size:18px; cursor:pointer; margin-left:8px; opacity:0.7; }
+    #messages .avatar { width:38px; height:38px; border-radius:50%; margin-right:10px; object-fit:cover; flex-shrink:0; border:2px solid #555; }
+    #messages .content { flex:1; line-height:1.4; }
+    #messages .username { font-weight:bold; margin-right:6px; }
+    #messages img.chat-img { max-width:260px; border-radius:8px; margin-top:6px; display:block; }
+    #messages .delete-btn { background:none; border:none; color:#ff7777; font-size:20px; cursor:pointer; margin-left:8px; opacity:0.6; align-self:center; }
     #messages .delete-btn:hover { opacity:1; }
-    #messages .system { margin:20px auto; width:fit-content; background:#444; color:#aaa; font-style:italic; padding:10px 20px; border-radius:20px; text-align:center; }
-    #input-area { display:flex; padding:12px; background:#1a1a1a; border-top:1px solid #333; }
-    #input { flex:1; padding:12px 16px; border:none; border-radius:20px 0 0 20px; background:#333; color:#eee; font-size:16px; }
-    #input:focus { outline:none; background:#444; }
-    button { padding:12px 20px; background:#007bff; border:none; color:white; cursor:pointer; font-size:16px; margin-left:8px; }
-    #clear-chat-btn { background:#ff4444; display:none; }
-    #reset-profile { background:#444; font-size:14px; padding:8px 16px; }
-    #online { color:#0f0; font-weight:bold; }
+    #messages .system { margin:20px auto; width:fit-content; background:#444; color:#bbb; font-style:italic; padding:8px 18px; border-radius:20px; text-align:center; }
+    #input-area { display:flex; padding:12px 16px; background:#1a1a1a; border-top:1px solid #333; gap:8px; }
+    #input { flex:1; padding:12px 16px; border:none; border-radius:24px; background:#2a2a2a; color:#eee; font-size:16px; }
+    #input:focus { outline:none; background:#333; }
+    button { padding:12px 18px; background:#007bff; border:none; color:white; cursor:pointer; border-radius:24px; font-size:15px; white-space:nowrap; }
+    #image-btn { background:#444; }
+    #clear-chat-btn { background:#d32f2f; display:none; }
+    #reset-profile { background:#555; font-size:13px; padding:8px 14px; }
+    #online { color:#4caf50; font-weight:bold; }
     h1 { margin:0 0 20px 0; }
-    input[type="file"] { margin:15px 0; display:block; }
   </style>
 </head>
 <body>
   <div id="container">
     <div id="name-screen">
       <h1>ChatWithRandoms.com</h1>
-      <p>Set your name + optional pic (saved forever until you reset)</p>
-      <input id="name" type="text" placeholder="Your name..." required style="padding:12px; width:280px; font-size:16px;" />
-      <label style="margin:15px 0; color:#ccc;">
-        Profile Picture (optional, <200KB best):
-        <input type="file" id="avatar-upload" accept="image/*" />
-      </label>
-      <button onclick="joinOrAuto()" style="padding:12px 40px; font-size:18px;">Join / Continue</button>
+      <p>Enter name + direct image URL (everyone sees your avatar)</p>
+      <input id="name" type="text" placeholder="Your name..." style="padding:12px; width:280px; font-size:16px; margin:10px 0;" />
+      <input id="avatar-url" type="text" placeholder="https://i.imgur.com/yourpic.jpg (optional)" style="padding:12px; width:280px; font-size:16px;" />
+      <button onclick="joinOrAuto()" style="padding:14px 50px; font-size:18px; margin-top:20px;">Join / Continue</button>
     </div>
 
     <div id="chat">
@@ -56,7 +53,7 @@
       <div id="input-area">
         <input id="input" autocomplete="off" placeholder="Type a message and hit Enter..." />
         <input type="file" id="image-upload" accept="image/*" style="display:none;" />
-        <button onclick="document.getElementById('image-upload').click()">📷</button>
+        <button id="image-btn" onclick="document.getElementById('image-upload').click()">📷</button>
         <button onclick="sendMessage()">Send</button>
       </div>
     </div>
@@ -64,30 +61,29 @@
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
-    const socket = io('https://chat-randoms-backend.onrender.com/');  // ← CHANGE THIS
+    const socket = io('https://chat-randoms-backend.onrender.com/');  // ← YOUR RENDER URL HERE
+
+    const ADMIN_SECRET = 'Admin-87a6d987asdt8yaguksdghfas7d';
+
+    let myUsername = localStorage.getItem('chatUsername') || '';
+    let myAvatarURL = localStorage.getItem('chatAvatarURL') || '';
 
     const nameScreen = document.getElementById('name-screen');
     const chat = document.getElementById('chat');
     const nameInput = document.getElementById('name');
-    const avatarUpload = document.getElementById('avatar-upload');
+    const avatarUrlInput = document.getElementById('avatar-url');
     const messages = document.getElementById('messages');
     const input = document.getElementById('input');
     const online = document.getElementById('online');
     const imageUpload = document.getElementById('image-upload');
     const clearChatBtn = document.getElementById('clear-chat-btn');
 
-    const ADMIN_SECRET = '87a6d987asdt8yaguksdghfas7d6qo8d7ra78D65Aoderfa678dwi5radarwd6i7';
-
-    let myUsername = localStorage.getItem('chatUsername') || '';
-    let myAvatar = localStorage.getItem('chatAvatar') || '';
-    let isAdmin = false;
-
     window.addEventListener('load', () => {
       if (myUsername) autoJoin();
     });
 
     function autoJoin() {
-      socket.emit('join', myUsername);
+      socket.emit('join', { name: myUsername, avatarURL: myAvatarURL });
       nameScreen.style.display = 'none';
       chat.style.display = 'flex';
       checkAdmin();
@@ -97,53 +93,37 @@
       const name = nameInput.value.trim();
       if (!name) return alert('Name required!');
       myUsername = name;
+      myAvatarURL = avatarUrlInput.value.trim() || '';
+
       localStorage.setItem('chatUsername', myUsername);
+      if (myAvatarURL) localStorage.setItem('chatAvatarURL', myAvatarURL);
 
-      const file = avatarUpload.files[0];
-      if (file && file.type.startsWith('image/')) {
-        if (file.size > 200 * 1024) return alert('Pic too big (<200KB)!');
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          myAvatar = e.target.result;
-          localStorage.setItem('chatAvatar', myAvatar);
-          proceedJoin();
-        };
-        reader.readAsDataURL(file);
-        return;
-      }
-      proceedJoin();
-    }
-
-    function proceedJoin() {
-      socket.emit('join', myUsername);
+      socket.emit('join', { name: myUsername, avatarURL: myAvatarURL });
       nameScreen.style.display = 'none';
       chat.style.display = 'flex';
       checkAdmin();
     }
 
     function checkAdmin() {
-      isAdmin = (myUsername === ADMIN_SECRET);
-      clearChatBtn.style.display = isAdmin ? 'inline-block' : 'none';
+      clearChatBtn.style.display = (myUsername === ADMIN_SECRET) ? 'inline-block' : 'none';
     }
 
     function clearAllChats() {
-      if (!confirm('Clear the WHOLE chat for everyone? Irreversible!')) return;
-      socket.emit('admin-clear-chat');
+      if (confirm('Clear entire chat for everyone?')) socket.emit('admin-clear-chat');
     }
 
     socket.on('clear-chat', () => {
       messages.innerHTML = '';
-      // Optional: add a system message client-side too
       const li = document.createElement('li');
       li.classList.add('system');
       li.textContent = 'Chat cleared by admin';
       messages.appendChild(li);
-      messages.scrollTop = messages.scrollHeight;
+      messages.scrollTop = messages.scrollHeight;  // force to bottom after clear
     });
 
     function resetProfile() {
       localStorage.removeItem('chatUsername');
-      localStorage.removeItem('chatAvatar');
+      localStorage.removeItem('chatAvatarURL');
       location.reload();
     }
 
@@ -157,73 +137,77 @@
 
     imageUpload.addEventListener('change', (e) => {
       const file = e.target.files[0];
-      if (!file || !file.type.startsWith('image/')) return;
-      if (file.size > 2 * 1024 * 1024) return alert('Image too big (max 2MB)');
+      if (!file || file.size > 2*1024*1024) return alert('Max 2MB image');
       const reader = new FileReader();
-      reader.onload = (event) => {
-        socket.emit('image', { buffer: event.target.result, mime: file.type });
-      };
+      reader.onload = (ev) => socket.emit('image', { buffer: ev.target.result, mime: file.type });
       reader.readAsArrayBuffer(file);
     });
 
-    input.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') sendMessage();
-    });
+    input.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+
+    function shouldAutoScroll() {
+      const threshold = 320;  // pixels from bottom — increased to feel more natural
+      return (messages.scrollHeight - messages.scrollTop - messages.clientHeight) < threshold;
+    }
 
     function appendMessage(data, isHistory = false) {
       const li = document.createElement('li');
-      const isMe = data.username === myUsername;
-      if (isMe) li.classList.add('me');
+      if (data.username === myUsername) li.classList.add('me');
 
       if (data.system) {
         li.classList.add('system');
         li.textContent = data.text;
       } else {
-        const avatarImg = document.createElement('img');
-        avatarImg.classList.add('avatar');
-        avatarImg.src = (isMe && myAvatar) ? myAvatar : `https://via.placeholder.com/40?text=${data.username[0] || '?'}`;
-        li.appendChild(avatarImg);
+        const avatar = document.createElement('img');
+        avatar.classList.add('avatar');
+        avatar.src = data.avatarURL || `https://via.placeholder.com/38?text=${data.username[0]||'?'}`;
+        avatar.onerror = () => { avatar.src = 'https://via.placeholder.com/38?text=?'; };
+        li.appendChild(avatar);
 
-        const contentDiv = document.createElement('div');
-        contentDiv.classList.add('content');
-        const userSpan = document.createElement('span');
-        userSpan.classList.add('username');
-        userSpan.textContent = data.username;
-        contentDiv.appendChild(userSpan);
+        const content = document.createElement('div');
+        content.classList.add('content');
+        content.innerHTML = `<span class="username">${data.username}</span> `;
 
         if (data.isImage) {
           const img = document.createElement('img');
           img.classList.add('chat-img');
           img.src = `data:${data.mime};base64,${arrayBufferToBase64(data.image)}`;
-          contentDiv.appendChild(img);
+          content.appendChild(img);
         } else {
-          contentDiv.appendChild(document.createTextNode(` ${data.text}`));
+          content.appendChild(document.createTextNode(data.text));
         }
-        li.appendChild(contentDiv);
+        li.appendChild(content);
 
-        if (isMe && !data.isImage) {
-          const delBtn = document.createElement('button');
-          delBtn.classList.add('delete-btn');
-          delBtn.textContent = '×';
-          delBtn.onclick = () => li.remove();
-          li.appendChild(delBtn);
+        if (data.username === myUsername && !data.isImage) {
+          const del = document.createElement('button');
+          del.classList.add('delete-btn');
+          del.textContent = '×';
+          del.onclick = () => li.remove();
+          li.appendChild(del);
         }
       }
 
       messages.appendChild(li);
 
-      const nearBottom = messages.scrollHeight - messages.scrollTop - messages.clientHeight < 150;
-      if (nearBottom || !isHistory) {
-        messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
+      // Smarter scroll logic
+      if (!isHistory || shouldAutoScroll()) {
+        // Small delay helps when many messages load at once (history)
+        setTimeout(() => {
+          messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
+        }, isHistory ? 100 : 0);
       }
     }
 
     socket.on('message', appendMessage);
-    socket.on('history', history => history.forEach(d => appendMessage(d, true)));
-
-    socket.on('online', count => {
-      online.textContent = `Online: ${count}`;
+    socket.on('history', history => {
+      history.forEach(d => appendMessage(d, true));
+      // Force scroll to bottom after full history load if was already at bottom
+      if (shouldAutoScroll()) {
+        messages.scrollTop = messages.scrollHeight;
+      }
     });
+
+    socket.on('online', count => online.textContent = `Online: ${count}`);
 
     function arrayBufferToBase64(buffer) {
       let binary = '';
