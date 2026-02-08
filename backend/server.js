@@ -1,105 +1,476 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChatWithRandoms.com</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, Arial, sans-serif;
+      background: #111;
+      color: #eee;
+    }
+    #container {
+      width: 100%;
+      max-width: 720px;
+      height: 100vh;
+      margin: 0 auto;
+      background: #222;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #name-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+      gap: 12px;
+    }
+    #chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      display: none;
+      overflow: hidden;
+    }
+    #header {
+      background: #1a1a1a;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #333;
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 16px;
+      margin: 0;
+      background: #000;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
+    #messages::-webkit-scrollbar { width: 8px; }
+    #messages::-webkit-scrollbar-track { background: transparent; }
+    #messages::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+    #messages li {
+      display: flex;
+      align-items: flex-start;
+      margin: 12px 0;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: #333;
+      max-width: 85%;
+      word-wrap: break-word;
+      line-height: 1.4;
+    }
+    #messages li.me {
+      margin-left: auto;
+      background: #007bff;
+      color: white;
+    }
+    #messages .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 12px;
+      object-fit: cover;
+      flex-shrink: 0;
+      border: 2px solid #555;
+    }
+    #messages .content { flex: 1; }
+    #messages .username { font-weight: bold; margin-right: 6px; }
+    #messages img.chat-img { max-width: 280px; border-radius: 10px; margin-top: 8px; display: block; }
+    #messages .delete-btn {
+      background: none;
+      border: none;
+      color: #ff7777;
+      font-size: 22px;
+      cursor: pointer;
+      margin-left: 10px;
+      opacity: 0.7;
+    }
+    #messages .delete-btn:hover { opacity: 1; }
+    #messages .system {
+      margin: 20px auto;
+      padding: 10px 20px;
+      background: #444;
+      color: #ccc;
+      font-style: italic;
+      border-radius: 20px;
+      text-align: center;
+      font-size: 14px;
+    }
+    #input-area {
+      display: flex;
+      padding: 12px 16px;
+      background: #1a1a1a;
+      border-top: 1px solid #333;
+      gap: 10px;
+      flex-shrink: 0;
+      position: relative;
+    }
+    #input {
+      flex: 1;
+      padding: 14px 18px;
+      border: none;
+      border-radius: 30px;
+      background: #2a2a2a;
+      color: #eee;
+      font-size: 16px;
+    }
+    #input:focus { outline: none; background: #333; }
+    button {
+      padding: 14px 20px;
+      background: #007bff;
+      border: none;
+      color: white;
+      cursor: pointer;
+      border-radius: 30px;
+      font-size: 15px;
+    }
+    #image-btn { background: #444; }
+    #clear-chat-btn { background: #d32f2f; display: none; }
+    #chaos-toggle-btn { background: #ff5722; display: none; }
+    #reset-profile { background: #555; font-size: 13px; padding: 8px 14px; }
+    #online { color: #4caf50; font-weight: bold; }
+    input[type="text"] {
+      padding: 14px 18px;
+      border: none;
+      border-radius: 30px;
+      width: 300px;
+      font-size: 16px;
+      background: #333;
+      color: white;
+    }
+    #spam-toast {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 87, 34, 0.9);
+      color: white;
+      padding: 10px 24px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: bold;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      z-index: 100;
+      white-space: nowrap;
+    }
+    #spam-toast.visible { opacity: 1; }
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
+    #chaos-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+      overflow: hidden;
+      display: none;
+    }
+    #chaos-overlay.active { display: block; }
+    .worm {
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      background: url('https://i.imgur.com/0rJ4Z0Z.gif') center/contain no-repeat;
+      filter: drop-shadow(0 0 40px #ff00ff) hue-rotate(0deg);
+      opacity: 0.9;
+    }
+    @keyframes spinFly {
+      0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 0.9; }
+      100% { transform: translate(var(--dx), var(--dy)) rotate(1080deg) scale(0.3); opacity: 0; }
+    }
+    #chaos-overlay.strobe {
+      animation: insane-strobe 0.05s infinite alternate;
+    }
+    @keyframes insane-strobe {
+      0%   { background: rgba(255,0,255,0.4); filter: invert(1) hue-rotate(0deg); }
+      25%  { background: rgba(0,255,255,0.4); filter: invert(0) hue-rotate(90deg); }
+      50%  { background: rgba(255,255,0,0.4); filter: invert(1) hue-rotate(180deg); }
+      75%  { background: rgba(255,0,0,0.4); filter: invert(0) hue-rotate(270deg); }
+      100% { background: rgba(0,255,0,0.4); filter: invert(1) hue-rotate(360deg); }
+    }
+    .shake {
+      animation: psycho-shake 0.04s infinite linear;
+    }
+    @keyframes psycho-shake {
+      0%   { transform: translate(0,0) rotate(0deg) scale(1); }
+      20%  { transform: translate(25px,-25px) rotate(7deg) scale(1.08); }
+      40%  { transform: translate(-25px,25px) rotate(-7deg) scale(0.92); }
+      60%  { transform: translate(25px,25px) rotate(7deg) scale(1.12); }
+      80%  { transform: translate(-25px,-25px) rotate(-7deg) scale(0.88); }
+      100% { transform: translate(0,0) rotate(0deg) scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="name-screen">
+      <h1>ChatWithRandoms.com</h1>
+      <p>Enter your name + avatar URL (everyone will see it)</p>
+      <input id="name" type="text" placeholder="Your name..." />
+      <input id="avatar-url" type="text" placeholder="https://i.imgur.com/abc123.jpg (optional)" />
+      <button onclick="joinOrAuto()">Join / Continue</button>
+    </div>
 
-let onlineUsers = 0;
-const recentMessages = [];
-const MAX_HISTORY = 100;
-const userAvatars = {};
-const lastMessageTime = new Map();
+    <div id="chat">
+      <div id="header">
+        <div id="online">Online: 0</div>
+        <div>
+          <button id="clear-chat-btn" onclick="clearAllChats()">Clear All Chats</button>
+          <button id="chaos-toggle-btn" onclick="toggleChaos()">Toggle Chaos</button>
+          <button id="reset-profile" onclick="resetProfile()">Change Profile</button>
+        </div>
+      </div>
+      <ul id="messages"></ul>
+      <div id="input-area">
+        <input id="input" autocomplete="off" placeholder="Type a message..." />
+        <input type="file" id="image-upload" accept="image/*" style="display:none;" />
+        <button id="image-btn" onclick="document.getElementById('image-upload').click()">Photo</button>
+        <button onclick="sendMessage()">Send</button>
+        <div id="spam-toast">Don't spam!</div>
+      </div>
+    </div>
+  </div>
 
-const ADMIN_SECRET = 'Admin-87a6d987asdt8yaguksdghfas7d';
+  <div id="chaos-overlay"></div>
 
-io.on('connection', (socket) => {
-  onlineUsers++;
-  io.emit('online', onlineUsers);
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    const socket = io('https://chat-randoms-backend.onrender.com');
 
-  socket.on('join', (data) => {
-    const { name, avatarURL } = data;
-    socket.username = name || 'Anonymous';
-    socket.avatarURL = avatarURL || '';
-    userAvatars[name] = socket.avatarURL;
+    const ADMIN_SECRET = 'Admin-87a6d987asdt8yaguksdghfas7d';
 
-    io.emit('message', { system: true, text: `${socket.username} joined the chat!` });
+    let myUsername = localStorage.getItem('chatUsername') || '';
+    let myAvatarURL = localStorage.getItem('chatAvatarURL') || '';
 
-    if (recentMessages.length > 0) socket.emit('history', recentMessages);
-  });
+    const nameScreen = document.getElementById('name-screen');
+    const chat = document.getElementById('chat');
+    const nameInput = document.getElementById('name');
+    const avatarUrlInput = document.getElementById('avatar-url');
+    const messages = document.getElementById('messages');
+    const input = document.getElementById('input');
+    const online = document.getElementById('online');
+    const imageUpload = document.getElementById('image-upload');
+    const clearChatBtn = document.getElementById('clear-chat-btn');
+    const chaosToggleBtn = document.getElementById('chaos-toggle-btn');
+    const spamToast = document.getElementById('spam-toast');
+    const chaosOverlay = document.getElementById('chaos-overlay');
+    const container = document.getElementById('container');
 
-  socket.on('chat message', (msg, callback) => {
-    if (!socket.username || !msg.trim()) {
-      if (callback) callback(false);
-      return;
+    let chaosActive = false;
+    let chaosLevel = 1;
+    let wormInterval;
+
+    if (myUsername) autoJoin();
+
+    function autoJoin() {
+      socket.emit('join', { name: myUsername, avatarURL: myAvatarURL });
+      nameScreen.style.display = 'none';
+      chat.style.display = 'flex';
+      checkAdmin();
     }
 
-    const now = Date.now();
-    const last = lastMessageTime.get(socket.id) || 0;
-    if (now - last < 1500) {
-      if (callback) callback(false);
-      return;
-    }
-    lastMessageTime.set(socket.id, now);
-
-    const messageData = { username: socket.username, avatarURL: socket.avatarURL, text: msg.trim(), isImage: false };
-    io.emit('message', messageData);
-
-    recentMessages.push(messageData);
-    if (recentMessages.length > MAX_HISTORY) recentMessages.shift();
-
-    if (callback) callback(true);
-  });
-
-  socket.on('image', (data, callback) => {
-    if (!socket.username) {
-      if (callback) callback(false);
-      return;
+    function joinOrAuto() {
+      const name = nameInput.value.trim();
+      if (!name) return alert('Name required!');
+      myUsername = name;
+      myAvatarURL = avatarUrlInput.value.trim() || '';
+      localStorage.setItem('chatUsername', myUsername);
+      if (myAvatarURL) localStorage.setItem('chatAvatarURL', myAvatarURL);
+      socket.emit('join', { name: myUsername, avatarURL: myAvatarURL });
+      nameScreen.style.display = 'none';
+      chat.style.display = 'flex';
+      checkAdmin();
     }
 
-    const now = Date.now();
-    const last = lastMessageTime.get(socket.id) || 0;
-    if (now - last < 3000) {
-      if (callback) callback(false);
-      return;
+    function checkAdmin() {
+      const isAdmin = (myUsername === ADMIN_SECRET);
+      clearChatBtn.style.display = isAdmin ? 'inline-block' : 'none';
+      chaosToggleBtn.style.display = isAdmin ? 'inline-block' : 'none';
     }
-    lastMessageTime.set(socket.id, now);
 
-    const messageData = { username: socket.username, avatarURL: socket.avatarURL, image: data.buffer, mime: data.mime, isImage: true };
-    io.emit('message', messageData);
-
-    recentMessages.push(messageData);
-    if (recentMessages.length > MAX_HISTORY) recentMessages.shift();
-
-    if (callback) callback(true);
-  });
-
-  socket.on('admin-clear-chat', () => {
-    if (socket.username === ADMIN_SECRET) {
-      recentMessages.length = 0;
-      Object.keys(userAvatars).forEach(k => delete userAvatars[k]);
-      lastMessageTime.clear();
-      io.emit('clear-chat');
-      io.emit('message', { system: true, text: 'Chat was cleared by an admin.' });
+    function clearAllChats() {
+      if (confirm('Clear chat for EVERYONE right now?')) socket.emit('admin-clear-chat');
     }
-  });
 
-  socket.on('admin-toggle-chaos', (enable) => {
-    if (socket.username === ADMIN_SECRET) {
-      io.emit('chaos-toggle', enable);
+    socket.on('clear-chat', () => {
+      messages.innerHTML = '';
+      addSystemMessage('Chat cleared by admin');
+      messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
+    });
+
+    function resetProfile() {
+      localStorage.removeItem('chatUsername');
+      localStorage.removeItem('chatAvatarURL');
+      location.reload();
     }
-  });
 
-  socket.on('disconnect', () => {
-    onlineUsers--;
-    lastMessageTime.delete(socket.id);
-    if (socket.username) {
-      io.emit('message', { system: true, text: `${socket.username} left the chat.` });
+    function showSpamWarning() {
+      spamToast.classList.add('visible');
+      setTimeout(() => spamToast.classList.remove('visible'), 2000);
     }
-    io.emit('online', onlineUsers);
-  });
-});
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT);
+    function sendMessage() {
+      const msg = input.value.trim();
+      if (!msg) return;
+      socket.emit('chat message', msg, (success) => {
+        if (success) input.value = '';
+        else showSpamWarning();
+      });
+    }
+
+    imageUpload.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file || file.size > 2*1024*1024) return alert('Max 2MB');
+      const reader = new FileReader();
+      reader.onload = ev => {
+        socket.emit('image', { buffer: ev.target.result, mime: file.type }, (success) => {
+          if (!success) showSpamWarning();
+        });
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    input.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+
+    function addSystemMessage(text) {
+      const li = document.createElement('li');
+      li.className = 'system';
+      li.textContent = text;
+      messages.appendChild(li);
+    }
+
+    function shouldAutoScroll() {
+      return (messages.scrollHeight - messages.scrollTop - messages.clientHeight) < 500;
+    }
+
+    function appendMessage(data, isHistory = false) {
+      const li = document.createElement('li');
+      if (data.username === myUsername) li.classList.add('me');
+
+      if (data.system) {
+        li.className = 'system';
+        li.textContent = data.text;
+      } else {
+        const avatar = document.createElement('img');
+        avatar.className = 'avatar';
+        avatar.src = data.avatarURL || `https://via.placeholder.com/40/333/fff?text=${data.username[0]||'?'}`;
+        avatar.onerror = () => avatar.src = 'https://via.placeholder.com/40/333/fff?text=?';
+        li.appendChild(avatar);
+
+        const content = document.createElement('div');
+        content.className = 'content';
+        content.innerHTML = `<span class="username">${data.username}</span> `;
+        if (data.isImage) {
+          const img = document.createElement('img');
+          img.className = 'chat-img';
+          img.src = `data:${data.mime};base64,${btoa(String.fromCharCode(...new Uint8Array(data.image)))}`;
+          content.appendChild(img);
+        } else {
+          content.appendChild(document.createTextNode(data.text));
+        }
+        li.appendChild(content);
+
+        if (data.username === myUsername && !data.isImage) {
+          const del = document.createElement('button');
+          del.className = 'delete-btn';
+          del.textContent = '×';
+          del.onclick = () => li.remove();
+          li.appendChild(del);
+        }
+      }
+
+      messages.appendChild(li);
+
+      if (!isHistory || shouldAutoScroll()) {
+        setTimeout(() => messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' }), isHistory ? 50 : 0);
+      }
+    }
+
+    socket.on('message', appendMessage);
+    socket.on('history', h => h.forEach(m => appendMessage(m, true)));
+    socket.on('online', c => online.textContent = `Online: ${c}`);
+
+    function toggleChaos() {
+      chaosActive = !chaosActive;
+      chaosToggleBtn.textContent = chaosActive ? 'STOP CHAOS' : 'Toggle Chaos';
+
+      socket.emit('admin-toggle-chaos', chaosActive);
+
+      if (chaosActive) {
+        chaosOverlay.classList.add('active', 'strobe');
+        container.classList.add('shake');
+        chaosLevel = 1;
+        spawnInsaneWorms();
+      } else {
+        chaosOverlay.classList.remove('active', 'strobe');
+        container.classList.remove('shake');
+        chaosOverlay.innerHTML = '';
+        clearInterval(wormInterval);
+      }
+    }
+
+    function spawnInsaneWorms() {
+      chaosOverlay.innerHTML = '';
+      for (let i = 0; i < 25; i++) {
+        const worm = document.createElement('div');
+        worm.className = 'worm';
+        const side = Math.floor(Math.random() * 8); // 8 directions for more randomness
+        let startX, startY, endX, endY;
+        if (side === 0) { startX = Math.random()*100; startY = -30; endX = startX + (Math.random()-0.5)*400; endY = 130; }
+        else if (side === 1) { startX = 130; startY = Math.random()*100; endX = -30; endY = startY + (Math.random()-0.5)*400; }
+        else if (side === 2) { startX = Math.random()*100; startY = 130; endX = startX + (Math.random()-0.5)*400; endY = -30; }
+        else if (side === 3) { startX = -30; startY = Math.random()*100; endX = 130; endY = startY + (Math.random()-0.5)*400; }
+        else if (side === 4) { startX = -30; startY = -30; endX = 130; endY = 130; }
+        else if (side === 5) { startX = 130; startY = -30; endX = -30; endY = 130; }
+        else if (side === 6) { startX = 130; startY = 130; endX = -30; endY = -30; }
+        else { startX = -30; startY = 130; endX = 130; endY = -30; }
+
+        worm.style.setProperty('--dx', `${endX}vw`);
+        worm.style.setProperty('--dy', `${endY}vh`);
+        worm.style.left = `${startX}vw`;
+        worm.style.top = `${startY}vh`;
+        worm.style.animation = `spinFly ${1.8 / chaosLevel}s linear forwards`;
+        worm.style.animationDelay = `${Math.random() * 0.4}s`;
+        chaosOverlay.appendChild(worm);
+      }
+      wormInterval = setTimeout(spawnInsaneWorms, 150 / chaosLevel);
+      chaosLevel = Math.min(chaosLevel + 0.5, 10);
+    }
+
+    socket.on('chaos-toggle', (enable) => {
+      chaosActive = enable;
+      chaosToggleBtn.textContent = chaosActive ? 'STOP CHAOS' : 'Toggle Chaos';
+      if (chaosActive) {
+        chaosOverlay.classList.add('active', 'strobe');
+        container.classList.add('shake');
+        chaosLevel = 1;
+        spawnInsaneWorms();
+      } else {
+        chaosOverlay.classList.remove('active', 'strobe');
+        container.classList.remove('shake');
+        chaosOverlay.innerHTML = '';
+        clearInterval(wormInterval);
+      }
+    });
+  </script>
+</body>
+</html>
