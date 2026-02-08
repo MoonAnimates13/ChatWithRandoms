@@ -85,6 +85,12 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('admin-toggle-chaos', (enable) => {
+    if (socket.username === ADMIN_SECRET) {
+      io.emit('chaos-toggle', enable);
+    }
+  });
+
   socket.on('disconnect', () => {
     onlineUsers--;
     lastMessageTime.delete(socket.id);
