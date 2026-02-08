@@ -191,12 +191,12 @@
       background-position: center;
       background-repeat: no-repeat;
       filter: drop-shadow(0 0 30px #00ff9d) drop-shadow(0 0 60px #ff00ff);
-      opacity: 0.85;
+      opacity: 0.92;
       pointer-events: none;
     }
     @keyframes kraterFly {
-      0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 0.9; }
-      100% { transform: translate(var(--dx), var(--dy)) rotate(2160deg) scale(0.2); opacity: 0; }
+      0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 0.92; }
+      100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rotate-end, 2160deg)) scale(0.15); opacity: 0; }
     }
     #chaos-overlay.strobe {
       animation: krater-strobe 0.04s infinite alternate;
@@ -210,10 +210,11 @@
     }
     @keyframes krater-shake {
       0%, 100% { transform: translate(0,0) rotate(0deg) scale(1); }
-      20% { transform: translate(40px,-40px) rotate(12deg) scale(1.2); }
-      40% { transform: translate(-40px,40px) rotate(-12deg) scale(0.8); }
-      60% { transform: translate(40px,40px) rotate(12deg) scale(1.25); }
-      80% { transform: translate(-40px,-40px) rotate(-12deg) scale(0.75); }
+      10% { transform: translate(60px,-60px) rotate(18deg) scale(1.3); }
+      30% { transform: translate(-60px,60px) rotate(-18deg) scale(0.7); }
+      50% { transform: translate(80px, -40px) rotate(25deg) scale(1.4); }
+      70% { transform: translate(-80px,40px) rotate(-25deg) scale(0.6); }
+      90% { transform: translate(40px, -80px) rotate(15deg) scale(1.2); }
     }
     #tempo-overlay {
       position: fixed;
@@ -451,17 +452,24 @@
     function spawnKraters() {
       chaosOverlay.innerHTML = '';
 
+      // Your requested album: https://imgur.com/a/WbLTEYX
+      // Unfortunately it's dead/empty now — no images load from it.
+      // Using reliable direct links to the classic "Krater" (smoking caterpillar) instead:
       const kraterImages = [
-        'https://i.kym-cdn.com/photos/images/original/002/347/450/0e9.png',
-        'https://i.kym-cdn.com/photos/images/newsfeed/002/347/457/4d0.png',
-        'https://i.imgur.com/0ZxKx8L.png'
+        'https://i.kym-cdn.com/photos/images/original/002/347/450/0e9.png',     // classic
+        'https://i.kym-cdn.com/photos/images/newsfeed/002/347/457/4d0.png',     // variant
+        'https://i.imgur.com/0ZxKx8L.png',                                      // another solid one
+        // If you re-upload to Imgur and get new direct links (e.g. https://i.imgur.com/NEWID.png),
+        // add them here like: 'https://i.imgur.com/NEWID.png',
       ];
 
-      for (let i = 0; i < 40; i++) {
+      const kraterCount = Math.min(40 + chaosLevel * 4, 80);
+
+      for (let i = 0; i < kraterCount; i++) {
         const krater = document.createElement('div');
         krater.className = 'krater';
 
-        const size = 60 + Math.random() * 220;
+        const size = 50 + Math.random() * 300;
         krater.style.width = `${size}px`;
         krater.style.height = `${size}px`;
 
@@ -470,31 +478,37 @@
 
         const side = Math.floor(Math.random() * 8);
         let startX, startY, dx, dy;
-        if      (side === 0) { startX = Math.random()*140; startY = -50; dx = (Math.random()-0.5)*700; dy = 200 + Math.random()*400; }
-        else if (side === 1) { startX = 150; startY = Math.random()*140; dx = -200 - Math.random()*400; dy = (Math.random()-0.5)*700; }
-        else if (side === 2) { startX = Math.random()*140; startY = 150; dx = (Math.random()-0.5)*700; dy = -200 - Math.random()*400; }
-        else if (side === 3) { startX = -50; startY = Math.random()*140; dx = 200 + Math.random()*400; dy = (Math.random()-0.5)*700; }
-        else if (side === 4) { startX = -50; startY = -50; dx = 200; dy = 200; }
-        else if (side === 5) { startX = 150; startY = -50; dx = -200; dy = 200; }
-        else if (side === 6) { startX = 150; startY = 150; dx = -200; dy = -200; }
-        else                 { startX = -50; startY = 150; dx = 200; dy = -200; }
+        if      (side === 0) { startX = Math.random()*180; startY = -80; dx = (Math.random()-0.5)*1200; dy = 300 + Math.random()*800; }
+        else if (side === 1) { startX = 180; startY = Math.random()*180; dx = -300 - Math.random()*800; dy = (Math.random()-0.5)*1200; }
+        else if (side === 2) { startX = Math.random()*180; startY = 180; dx = (Math.random()-0.5)*1200; dy = -300 - Math.random()*800; }
+        else if (side === 3) { startX = -80; startY = Math.random()*180; dx = 300 + Math.random()*800; dy = (Math.random()-0.5)*1200; }
+        else if (side === 4) { startX = -80; startY = -80; dx = (Math.random()-0.5)*1000; dy = (Math.random()-0.5)*1000; }
+        else if (side === 5) { startX = 180; startY = -80; dx = -(Math.random()*1000 + 200); dy = (Math.random()*1000 + 200); }
+        else if (side === 6) { startX = 180; startY = 180; dx = -(Math.random()*1000 + 200); dy = -(Math.random()*1000 + 200); }
+        else                 { startX = -80; startY = 180; dx = (Math.random()*1000 + 200); dy = -(Math.random()*1000 + 200); }
 
         krater.style.left = `${startX}vw`;
         krater.style.top  = `${startY}vh`;
         krater.style.setProperty('--dx', `${dx}vw`);
         krater.style.setProperty('--dy', `${dy}vh`);
 
-        const duration = (1.2 - (chaosLevel * 0.04)).toFixed(2);
+        const baseDuration = 1.4 - (chaosLevel * 0.055);
+        const duration = Math.max(0.18, baseDuration);
+        const direction = Math.random() > 0.5 ? 2160 : -2160;
         krater.style.animation = `kraterFly ${duration}s ease-in-out forwards`;
-        krater.style.animationDelay = `${Math.random() * 0.6}s`;
+        krater.style.setProperty('--rotate-end', `${direction}deg`);
+        krater.style.animationDelay = `${Math.random() * 0.4}s`;
+
+        const glowIntensity = Math.min(chaosLevel * 8, 120);
+        krater.style.filter = `drop-shadow(0 0 ${glowIntensity}px #00ff9d) drop-shadow(0 0 ${glowIntensity*1.5}px #ff00ff)`;
 
         chaosOverlay.appendChild(krater);
       }
 
-      const nextSpawnMs = Math.max(400, 1200 - (chaosLevel * 50));
+      const nextSpawnMs = Math.max(200, 900 - (chaosLevel * 60));
       kraterInterval = setTimeout(spawnKraters, nextSpawnMs);
 
-      chaosLevel = Math.min(chaosLevel + 1, 18);
+      chaosLevel = Math.min(chaosLevel + 1.5, 25);
     }
 
     socket.on('chaos-toggle', (enable) => {
