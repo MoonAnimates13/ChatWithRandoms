@@ -129,6 +129,10 @@
       font-size:16px; 
       margin-left:8px; 
     }
+    #clear-chat-btn { 
+      background:#ff4444; 
+      display:none;  /* Hidden unless admin */
+    }
     #reset-profile { 
       background:#444; 
       font-size:14px; 
@@ -155,7 +159,10 @@
     <div id="chat">
       <div id="header">
         <div id="online">Online: 0</div>
-        <button id="reset-profile" onclick="resetProfile()">Change Profile</button>
+        <div>
+          <button id="clear-chat-btn" onclick="clearAllChats()">Clear All Chats</button>
+          <button id="reset-profile" onclick="resetProfile()">Change Profile</button>
+        </div>
       </div>
       <ul id="messages"></ul>
       <div id="input-area">
@@ -180,11 +187,15 @@
     const input = document.getElementById('input');
     const online = document.getElementById('online');
     const imageUpload = document.getElementById('image-upload');
+    const clearChatBtn = document.getElementById('clear-chat-btn');
+
+    const ADMIN_SECRET = '87a6d987asdt8yaguksdghfas7d6qo8d7ra78D65Aoderfa678dwi5radarwd6i7';
 
     let myUsername = localStorage.getItem('chatUsername') || '';
-    let myAvatar = localStorage.getItem('chatAvatar') || '';  // base64 data URL
+    let myAvatar = localStorage.getItem('chatAvatar') || '';
+    let isAdmin = false;
 
-    // Auto-join if profile already saved
+    // Auto-join if saved
     window.addEventListener('load', () => {
       if (myUsername) {
         autoJoin();
@@ -195,6 +206,7 @@
       socket.emit('join', myUsername);
       nameScreen.style.display = 'none';
       chat.style.display = 'flex';
+      checkAdmin();
     }
 
     function joinOrAuto() {
@@ -211,7 +223,7 @@
         } else {
           const reader = new FileReader();
           reader.onload = (e) => {
-            myAvatar = e.target.result;  // data:image/...;base64,...
+            myAvatar = e.target.result;
             localStorage.setItem('chatAvatar', myAvatar);
             proceedJoin();
           };
@@ -226,12 +238,29 @@
       socket.emit('join', myUsername);
       nameScreen.style.display = 'none';
       chat.style.display = 'flex';
+      checkAdmin();
     }
+
+    function checkAdmin() {
+      isAdmin = (myUsername === ADMIN_SECRET);
+      clearChatBtn.style.display = isAdmin ? 'inline-block' : 'none';
+    }
+
+    function clearAllChats() {
+      if (confirm('Clear the entire chat for EVERYONE? This cannot be undone!')) {
+        socket.emit('admin-clear-chat');
+      }
+    }
+
+    socket.on('clear-chat', () => {
+      messages.innerHTML = '';  // Wipe all messages in UI
+      console.log('Chat cleared by admin');
+    });
 
     function resetProfile() {
       localStorage.removeItem('chatUsername');
       localStorage.removeItem('chatAvatar');
-      location.reload();  // Refresh to show name screen again
+      location.reload();
     }
 
     function sendMessage() {
@@ -252,7 +281,7 @@
       const reader = new FileReader();
       reader.onload = (event) => {
         socket.emit('image', {
-          buffer: event.target.result,  // ArrayBuffer
+          buffer: event.target.result,
           mime: file.type
         });
       };
@@ -272,11 +301,9 @@
         li.classList.add('system');
         li.textContent = data.text;
       } else {
-        // Avatar (use sender's if sent, fallback to default; for now client-only so use placeholder or own if me)
         const avatarImg = document.createElement('img');
         avatarImg.classList.add('avatar');
         avatarImg.src = (isMe && myAvatar) ? myAvatar : 'https://via.placeholder.com/40?text=' + (data.username[0] || '?');
-        avatarImg.alt = data.username;
         li.appendChild(avatarImg);
 
         const contentDiv = document.createElement('div');
@@ -298,7 +325,6 @@
 
         li.appendChild(contentDiv);
 
-        // Delete for own messages
         if (isMe && !data.isImage) {
           const delBtn = document.createElement('button');
           delBtn.classList.add('delete-btn');
@@ -310,8 +336,7 @@
 
       messages.appendChild(li);
 
-      // Smooth scroll only if near bottom or new message
-      const nearBottom = messages.scrollHeight - messages.scrollTop - messages.clientHeight < 100;
+      const nearBottom = messages.scrollHeight - messages.scrollTop - messages.clientHeight < 150;
       if (nearBottom || !isHistory) {
         messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
       }
