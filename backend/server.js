@@ -9,7 +9,8 @@ const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } 
 let onlineUsers = 0;
 const recentMessages = [];
 const MAX_HISTORY = 100;
-const userAvatars = {};   // ← stores avatar URL per username
+const userAvatars = {};
+const lastMessageTime = new Map();  // Anti-spam
 
 const ADMIN_SECRET = 'Admin-87a6d987asdt8yaguksdghfas7d';
 
@@ -18,7 +19,6 @@ io.on('connection', (socket) => {
   onlineUsers++;
   io.emit('online', onlineUsers);
 
-  // Join now sends {name, avatarURL}
   socket.on('join', (data) => {
     const { name, avatarURL } = data;
     socket.username = name || 'Anonymous';
@@ -27,48 +27,45 @@ io.on('connection', (socket) => {
 
     io.emit('message', { system: true, text: `${socket.username} joined the chat!` });
 
-    if (recentMessages.length > 0) {
-      socket.emit('history', recentMessages);
-    }
+    if (recentMessages.length > 0) socket.emit('history', recentMessages);
   });
 
   socket.on('chat message', (msg) => {
-    if (socket.username && msg.trim()) {
-      const messageData = {
-        username: socket.username,
-        avatarURL: socket.avatarURL,
-        text: msg.trim(),
-        isImage: false
-      };
-      io.emit('message', messageData);
+    if (!socket.username || !msg.trim()) return;
 
-      recentMessages.push(messageData);
-      if (recentMessages.length > MAX_HISTORY) recentMessages.shift();
-    }
+    const now = Date.now();
+    const last = lastMessageTime.get(socket.id) || 0;
+    if (now - last < 1500) return;  // Anti-spam: 1 msg every 1.5s
+    lastMessageTime.set(socket.id, now);
+
+    const messageData = { username: socket.username, avatarURL: socket.avatarURL, text: msg.trim(), isImage: false };
+    io.emit('message', messageData);
+
+    recentMessages.push(messageData);
+    if (recentMessages.length > MAX_HISTORY) recentMessages.shift();
   });
 
   socket.on('image', (data) => {
-    if (socket.username) {
-      const messageData = {
-        username: socket.username,
-        avatarURL: socket.avatarURL,
-        image: data.buffer,
-        mime: data.mime,
-        isImage: true
-      };
-      io.emit('message', messageData);
+    if (!socket.username) return;
 
-      recentMessages.push(messageData);
-      if (recentMessages.length > MAX_HISTORY) recentMessages.shift();
-    }
+    const now = Date.now();
+    const last = lastMessageTime.get(socket.id) || 0;
+    if (now - last < 3000) return;  // Images slower (3s cooldown)
+    lastMessageTime.set(socket.id, now);
+
+    const messageData = { username: socket.username, avatarURL: socket.avatarURL, image: data.buffer, mime: data.mime, isImage: true };
+    io.emit('message', messageData);
+
+    recentMessages.push(messageData);
+    if (recentMessages.length > MAX_HISTORY) recentMessages.shift();
   });
 
-  // ADMIN CLEAR
   socket.on('admin-clear-chat', () => {
     if (socket.username === ADMIN_SECRET) {
       console.log('ADMIN CLEARED CHAT');
       recentMessages.length = 0;
-      userAvatars = {};   // optional: clear avatars too
+      Object.keys(userAvatars).forEach(k => delete userAvatars[k]);
+      lastMessageTime.clear();
       io.emit('clear-chat');
       io.emit('message', { system: true, text: 'Chat was cleared by an admin.' });
     }
@@ -77,6 +74,7 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('User disconnected');
     onlineUsers--;
+    lastMessageTime.delete(socket.id);
     if (socket.username) {
       io.emit('message', { system: true, text: `${socket.username} left the chat.` });
     }
@@ -85,4 +83,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server on ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on ${PORT}`));
