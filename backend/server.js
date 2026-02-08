@@ -1,7 +1,6 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
@@ -11,7 +10,6 @@ const recentMessages = [];
 const MAX_HISTORY = 100;
 const userAvatars = {};
 const lastMessageTime = new Map();
-
 const ADMIN_SECRET = 'Admin-87a6d987asdt8yaguksdghfas7d';
 
 io.on('connection', (socket) => {
@@ -23,9 +21,7 @@ io.on('connection', (socket) => {
     socket.username = name || 'Anonymous';
     socket.avatarURL = avatarURL || '';
     userAvatars[name] = socket.avatarURL;
-
     io.emit('message', { system: true, text: `${socket.username} joined the chat!` });
-
     if (recentMessages.length > 0) socket.emit('history', recentMessages);
   });
 
@@ -34,7 +30,6 @@ io.on('connection', (socket) => {
       if (callback) callback(false);
       return;
     }
-
     const now = Date.now();
     const last = lastMessageTime.get(socket.id) || 0;
     if (now - last < 1500) {
@@ -42,13 +37,10 @@ io.on('connection', (socket) => {
       return;
     }
     lastMessageTime.set(socket.id, now);
-
     const messageData = { username: socket.username, avatarURL: socket.avatarURL, text: msg.trim(), isImage: false };
     io.emit('message', messageData);
-
     recentMessages.push(messageData);
     if (recentMessages.length > MAX_HISTORY) recentMessages.shift();
-
     if (callback) callback(true);
   });
 
@@ -57,7 +49,6 @@ io.on('connection', (socket) => {
       if (callback) callback(false);
       return;
     }
-
     const now = Date.now();
     const last = lastMessageTime.get(socket.id) || 0;
     if (now - last < 3000) {
@@ -65,13 +56,10 @@ io.on('connection', (socket) => {
       return;
     }
     lastMessageTime.set(socket.id, now);
-
     const messageData = { username: socket.username, avatarURL: socket.avatarURL, image: data.buffer, mime: data.mime, isImage: true };
     io.emit('message', messageData);
-
     recentMessages.push(messageData);
     if (recentMessages.length > MAX_HISTORY) recentMessages.shift();
-
     if (callback) callback(true);
   });
 
