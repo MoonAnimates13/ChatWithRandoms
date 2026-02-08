@@ -225,9 +225,7 @@
     }
 
     function appendMessage(data, isHistory = false) {
-      // Extra safety: never show admin join/leave even if somehow sent
       if (data.system && data.text.includes(ADMIN_SECRET)) return;
-
       const li = document.createElement('li');
       if (data.username === myUsername) li.classList.add('me');
       if (data.system) {
@@ -288,7 +286,11 @@
 
     function spawnKraters() {
       chaosOverlay.innerHTML = '';
-      const kraterImages = ['https://i.kym-cdn.com/photos/images/original/002/347/450/0e9.png','https://i.kym-cdn.com/photos/images/newsfeed/002/347/457/4d0.png','https://i.imgur.com/0ZxKx8L.png'];
+      const kraterImages = [
+        'https://i.kym-cdn.com/photos/images/original/002/347/450/0e9.png',
+        'https://i.kym-cdn.com/photos/images/newsfeed/002/347/457/4d0.png',
+        'https://i.imgur.com/0ZxKx8L.png'
+      ];
       const kraterCount = Math.min(40 + chaosLevel * 4, 80);
       for (let i = 0; i < kraterCount; i++) {
         const krater = document.createElement('div');
@@ -352,7 +354,7 @@
         tempoAudio.volume = 1.0;
         tempoAudio.playbackRate = 1.0;
         tempoAudio.currentTime = 0;
-        tempoAudio.play().catch(() => {});
+        tempoAudio.play().catch(() => console.log('Audio blocked'));
         setTimeout(() => {
           tempoOverlay.style.animation = 'explodeTempo 1.5s forwards';
           setTimeout(() => {
@@ -410,4 +412,23 @@
 
     socket.on('ban-list-update', (banData) => {
       const listEl = document.getElementById('ban-list');
-      list
+      listEl.innerHTML = '';
+      if (banData.bannedUsernames.length === 0) {
+        listEl.innerHTML = '<li style="color:#888;">No bans active</li>';
+        return;
+      }
+      banData.bannedUsernames.forEach(entry => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="username">${entry.username}</span>`;
+        if (entry.ip) li.innerHTML += `<br><span class="ip">Last IP: ${entry.ip}</span>`;
+        listEl.appendChild(li);
+      });
+    });
+
+    socket.on('banned', (data) => {
+      alert(`You are banned: ${data.reason || 'No reason provided.'}`);
+      document.body.innerHTML = `<div style="color:red; text-align:center; margin-top:40vh; font-size:32px;">BANNED<br><br>${data.reason || 'You have been banned from this chat.'}</div>`;
+    });
+  </script>
+</body>
+</html>
