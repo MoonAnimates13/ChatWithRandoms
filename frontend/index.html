@@ -189,12 +189,12 @@
     .krater {
       position: absolute;
       background: url('https://preview.redd.it/gj65cdzde2u71.gif?format=png8&s=19e958b199f80e237e3bde960d113459cd01e95d') center/contain no-repeat;
-      filter: drop-shadow(0 0 30px #ff00ff);
+      filter: drop-shadow(0 0 40px #ff00ff);
       opacity: 0.9;
     }
     @keyframes kraterFly {
-      0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 0.9; }
-      100% { transform: translate(var(--dx), var(--dy)) rotate(2160deg) scale(0.15); opacity: 0; }
+      0%   { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 0.9; }
+      100% { transform: translate(var(--dx), var(--dy)) rotate(2160deg) scale(0.2); opacity: 0; }
     }
     #chaos-overlay.strobe {
       animation: krater-strobe 0.04s infinite alternate;
@@ -208,10 +208,36 @@
     }
     @keyframes krater-shake {
       0%, 100% { transform: translate(0,0) rotate(0deg) scale(1); }
-      20%  { transform: translate(35px,-35px) rotate(10deg) scale(1.15); }
-      40%  { transform: translate(-35px,35px) rotate(-10deg) scale(0.85); }
-      60%  { transform: translate(35px,35px) rotate(10deg) scale(1.2); }
-      80%  { transform: translate(-35px,-35px) rotate(-10deg) scale(0.8); }
+      20%  { transform: translate(40px,-40px) rotate(12deg) scale(1.2); }
+      40%  { transform: translate(-40px,40px) rotate(-12deg) scale(0.8); }
+      60%  { transform: translate(40px,40px) rotate(12deg) scale(1.25); }
+      80%  { transform: translate(-40px,-40px) rotate(-12deg) scale(0.75); }
+    }
+
+    #tempo-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.85);
+      z-index: 10000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none;
+    }
+    #tempo-overlay.active { display: flex; }
+    #tempo-img {
+      max-width: 80%;
+      max-height: 80%;
+      border-radius: 20px;
+      box-shadow: 0 0 60px #ff0000;
+      animation: explode 5s forwards;
+    }
+    @keyframes explode {
+      0% { transform: scale(1) rotate(0deg); opacity: 1; }
+      80% { transform: scale(1.5) rotate(360deg); opacity: 1; }
+      100% { transform: scale(3) rotate(720deg); opacity: 0; }
     }
   </style>
 </head>
@@ -247,7 +273,9 @@
   </div>
 
   <div id="chaos-overlay"></div>
-  <div id="tempo-overlay"></div>
+  <div id="tempo-overlay">
+    <img id="tempo-img" src="https://media.tenor.com/GBvBu5ErSSoAAAAC/not-quite-my-tempo.gif" alt="Not quite my tempo">
+  </div>
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
@@ -278,7 +306,9 @@
     let chaosLevel = 1;
     let kraterInterval;
     let tempoActive = false;
-    let tempoAudio = new Audio('https://www.myinstants.com/media/sounds/not-quite-my-tempo.mp3');
+    const tempoAudio = new Audio('https://www.myinstants.com/media/sounds/not-quite-my-tempo.mp3');
+    tempoAudio.volume = 1.0; // max volume
+    tempoAudio.playbackRate = 1.0; // normal speed, but loud
 
     if (myUsername) autoJoin();
 
@@ -432,7 +462,7 @@
 
     function spawnKraters() {
       chaosOverlay.innerHTML = '';
-      for (let i = 0; i < 45; i++) {
+      for (let i = 0; i < 50; i++) {
         const krater = document.createElement('div');
         krater.className = 'krater';
         const size = 80 + Math.random() * 240;
@@ -454,13 +484,13 @@
         krater.style.top = startY + 'vh';
         krater.style.setProperty('--dx', dx + 'vw');
         krater.style.setProperty('--dy', dy + 'vh');
-        krater.style.animation = `kraterFly ${1 / chaosLevel}s ease-in-out forwards`;
-        krater.style.animationDelay = `${Math.random() * 0.6}s`;
+        krater.style.animation = `kraterFly ${0.8 / chaosLevel}s ease-in-out forwards`;
+        krater.style.animationDelay = `${Math.random() * 0.5}s`;
         chaosOverlay.appendChild(krater);
       }
 
-      kraterInterval = setTimeout(spawnKraters, 80 / chaosLevel);
-      chaosLevel = Math.min(chaosLevel + 0.8, 18);
+      kraterInterval = setTimeout(spawnKraters, 60 / chaosLevel);
+      chaosLevel = Math.min(chaosLevel + 1, 20);
     }
 
     socket.on('chaos-toggle', (enable) => {
@@ -476,6 +506,59 @@
         container.classList.remove('shake');
         chaosOverlay.innerHTML = '';
         clearInterval(kraterInterval);
+      }
+    });
+
+    function toggleTempo() {
+      tempoActive = !tempoActive;
+      tempoToggleBtn.textContent = tempoActive ? 'Stop Tempo' : 'Tempo Meme';
+
+      socket.emit('admin-toggle-tempo', tempoActive);
+
+      if (tempoActive) {
+        tempoOverlay.style.display = 'flex';
+        tempoAudio.volume = 1.0;
+        tempoAudio.playbackRate = 1.0;
+        tempoAudio.currentTime = 0;
+        tempoAudio.play().catch(() => console.log('Audio play blocked - user interaction required'));
+        setTimeout(() => {
+          tempoOverlay.style.animation = 'explodeTempo 1.5s forwards';
+          setTimeout(() => {
+            tempoOverlay.style.display = 'none';
+            tempoOverlay.style.animation = '';
+            tempoActive = false;
+            tempoToggleBtn.textContent = 'Tempo Meme';
+          }, 1500);
+        }, 3500); // explode after audio plays
+      } else {
+        tempoOverlay.style.display = 'none';
+        tempoAudio.pause();
+        tempoOverlay.style.animation = '';
+      }
+    }
+
+    socket.on('tempo-toggle', (enable) => {
+      tempoActive = enable;
+      tempoToggleBtn.textContent = tempoActive ? 'Stop Tempo' : 'Tempo Meme';
+      if (tempoActive) {
+        tempoOverlay.style.display = 'flex';
+        tempoAudio.volume = 1.0;
+        tempoAudio.playbackRate = 1.0;
+        tempoAudio.currentTime = 0;
+        tempoAudio.play().catch(() => {});
+        setTimeout(() => {
+          tempoOverlay.style.animation = 'explodeTempo 1.5s forwards';
+          setTimeout(() => {
+            tempoOverlay.style.display = 'none';
+            tempoOverlay.style.animation = '';
+            tempoActive = false;
+            tempoToggleBtn.textContent = 'Tempo Meme';
+          }, 1500);
+        }, 3500);
+      } else {
+        tempoOverlay.style.display = 'none';
+        tempoAudio.pause();
+        tempoOverlay.style.animation = '';
       }
     });
   </script>
