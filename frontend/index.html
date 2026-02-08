@@ -188,7 +188,7 @@
     #chaos-overlay.active { display: block; }
     .krater {
       position: absolute;
-      background: url('https://preview.redd.it/gj65cdzde2u71.gif?format=png8&s=19e958b199f80e237e3bde960d113459cd01e95d') center/contain no-repeat;
+      background: url('https://i.imgur.com/0rJ4Z0Z.gif') center/contain no-repeat;
       filter: drop-shadow(0 0 40px #ff00ff);
       opacity: 0.9;
     }
@@ -232,12 +232,12 @@
       max-height: 80%;
       border-radius: 20px;
       box-shadow: 0 0 60px #ff0000;
-      animation: explode 5s forwards;
+      animation: explodeTempo 5s forwards;
     }
-    @keyframes explode {
+    @keyframes explodeTempo {
       0% { transform: scale(1) rotate(0deg); opacity: 1; }
-      80% { transform: scale(1.5) rotate(360deg); opacity: 1; }
-      100% { transform: scale(3) rotate(720deg); opacity: 0; }
+      80% { transform: scale(2.5) rotate(720deg); opacity: 1; }
+      100% { transform: scale(5) rotate(1440deg); opacity: 0; }
     }
   </style>
 </head>
@@ -274,7 +274,7 @@
 
   <div id="chaos-overlay"></div>
   <div id="tempo-overlay">
-    <img id="tempo-img" src="https://media.tenor.com/GBvBu5ErSSoAAAAC/not-quite-my-tempo.gif" alt="Not quite my tempo">
+    <img id="tempo-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPsny6wHtHWi3m5WQqxT8TabGwB-e6NAUteA&s" alt="Not quite my tempo">
   </div>
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
@@ -307,8 +307,8 @@
     let kraterInterval;
     let tempoActive = false;
     const tempoAudio = new Audio('https://www.myinstants.com/media/sounds/not-quite-my-tempo.mp3');
-    tempoAudio.volume = 1.0; // max volume
-    tempoAudio.playbackRate = 1.0; // normal speed, but loud
+    tempoAudio.volume = 1.0;
+    tempoAudio.playbackRate = 1.0;
 
     if (myUsername) autoJoin();
 
@@ -520,7 +520,7 @@
         tempoAudio.volume = 1.0;
         tempoAudio.playbackRate = 1.0;
         tempoAudio.currentTime = 0;
-        tempoAudio.play().catch(() => console.log('Audio play blocked - user interaction required'));
+        tempoAudio.play().catch(() => console.log('Audio blocked - user interaction needed'));
         setTimeout(() => {
           tempoOverlay.style.animation = 'explodeTempo 1.5s forwards';
           setTimeout(() => {
@@ -529,7 +529,7 @@
             tempoActive = false;
             tempoToggleBtn.textContent = 'Tempo Meme';
           }, 1500);
-        }, 3500); // explode after audio plays
+        }, 3500);
       } else {
         tempoOverlay.style.display = 'none';
         tempoAudio.pause();
