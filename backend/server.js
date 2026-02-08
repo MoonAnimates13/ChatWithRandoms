@@ -10,7 +10,7 @@ const recentMessages = [];
 const MAX_HISTORY = 100;
 const userAvatars = {};
 const lastMessageTime = new Map();
-const ADMIN_SECRET = 'Admin-87a6d987asdt8yaguksdghfas7d';
+const ADMIN_SECRET = 'Admin-87a6d987asdt8yaguksdghfas7d!';
 
 io.on('connection', (socket) => {
   onlineUsers++;
