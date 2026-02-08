@@ -254,6 +254,43 @@
       80% { transform: scale(2.5) rotate(720deg); opacity: 1; }
       100% { transform: scale(5) rotate(1440deg); opacity: 0; }
     }
+
+    /* Right-side admin ban panel */
+    #admin-ban-panel {
+      position: fixed;
+      top: 60px;
+      right: 20px;
+      width: 280px;
+      max-height: 80vh;
+      background: rgba(30,30,30,0.92);
+      border: 1px solid #444;
+      border-radius: 12px;
+      padding: 12px;
+      color: #eee;
+      font-size: 13px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+    #admin-ban-panel h3 {
+      margin: 0 0 10px 0;
+      font-size: 15px;
+      color: #ff5722;
+    }
+    #ban-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    #ban-list li {
+      padding: 6px 0;
+      border-bottom: 1px solid #333;
+      word-break: break-all;
+    }
+    #ban-list li:last-child { border-bottom: none; }
+    #ban-list .username { color: #ff7777; font-weight: bold; }
+    #ban-list .ip { color: #aaa; font-size: 11px; }
   </style>
 </head>
 <body>
@@ -288,6 +325,13 @@
       </div>
     </div>
   </div>
+
+  <!-- Admin ban list panel (right side, visible only to admin) -->
+  <div id="admin-ban-panel">
+    <h3>Banned Users & IPs</h3>
+    <ul id="ban-list"></ul>
+  </div>
+
   <div id="chaos-overlay"></div>
   <div id="tempo-overlay">
     <img id="tempo-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPsny6wHtHWi3m5WQqxT8TabGwB-e6NAUteA&s" alt="Not quite my tempo">
@@ -355,6 +399,7 @@
       banBtn.style.display = isAdmin ? 'inline-block' : 'none';
       unbanBtn.style.display = isAdmin ? 'inline-block' : 'none';
       banInput.style.display = isAdmin ? 'inline-block' : 'none';
+      document.getElementById('admin-ban-panel').style.display = isAdmin ? 'block' : 'none';
     }
 
     function clearAllChats() {
@@ -475,7 +520,9 @@
       chaosOverlay.innerHTML = '';
 
       const kraterImages = [
-        'https://c.tenor.com/OacC9jUhkgQAAAAC/tenor.gif'
+        'https://i.kym-cdn.com/photos/images/original/002/347/450/0e9.png',
+        'https://i.kym-cdn.com/photos/images/newsfeed/002/347/457/4d0.png',
+        'https://i.imgur.com/0ZxKx8L.png'
       ];
 
       const kraterCount = Math.min(40 + chaosLevel * 4, 80);
@@ -593,20 +640,38 @@
       }
     });
 
-    // Ban / Unban functions
     function adminBan() {
       const target = banInput.value.trim();
-      if (!target) return alert('Enter a username to ban!');
+      if (!target) return alert('Enter a username!');
       socket.emit('admin-ban-user', target);
       banInput.value = '';
     }
 
     function adminUnban() {
       const target = banInput.value.trim();
-      if (!target) return alert('Enter a username to unban!');
+      if (!target) return alert('Enter a username!');
       socket.emit('admin-unban-user', target);
       banInput.value = '';
     }
+
+    socket.on('ban-list-update', (banData) => {
+      const listEl = document.getElementById('ban-list');
+      listEl.innerHTML = '';
+
+      if (banData.bannedUsernames.length === 0) {
+        listEl.innerHTML = '<li style="color:#888;">No bans active</li>';
+        return;
+      }
+
+      banData.bannedUsernames.forEach((entry) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="username">${entry.username}</span>`;
+        if (entry.ip) {
+          li.innerHTML += `<br><span class="ip">Last IP: ${entry.ip}</span>`;
+        }
+        listEl.appendChild(li);
+      });
+    });
 
     socket.on('banned', (data) => {
       alert(`You are banned: ${data.reason || 'No reason provided.'}`);
