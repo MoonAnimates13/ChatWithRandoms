@@ -9,55 +9,60 @@ const io = new Server(server, {
 });
 
 let onlineUsers = 0;
-const recentMessages = [];          
-const MAX_HISTORY = 100;            
+const recentMessages = [];
+const MAX_HISTORY = 100;
+
+const ADMIN_SECRET = '87a6d987asdt8yaguksdghfas7d6qo8d7ra78D65Aoderfa678dwi5radarwd6i7';
 
 io.on('connection', (socket) => {
   console.log('A user connected');
   onlineUsers++;
   io.emit('online', onlineUsers);
 
-  
   socket.on('join', (name) => {
     socket.username = name || 'Anonymous';
     io.emit('message', { system: true, text: `${socket.username} joined the chat!` });
 
-    
     if (recentMessages.length > 0) {
       socket.emit('history', recentMessages);
     }
   });
 
-  
   socket.on('chat message', (msg) => {
     if (socket.username && msg.trim()) {
       const messageData = { username: socket.username, text: msg.trim(), isImage: false };
       io.emit('message', messageData);
 
-      
       recentMessages.push(messageData);
-      if (recentMessages.length > MAX_HISTORY) {
-        recentMessages.shift();  
-      }
+      if (recentMessages.length > MAX_HISTORY) recentMessages.shift();
     }
   });
 
-  
-  socket.on('image', (data) => {  
+  socket.on('image', (data) => {
     if (socket.username) {
       const messageData = {
         username: socket.username,
-        image: data.buffer,   
+        image: data.buffer,
         mime: data.mime,
         isImage: true
       };
       io.emit('message', messageData);
 
-      
       recentMessages.push(messageData);
-      if (recentMessages.length > MAX_HISTORY) {
-        recentMessages.shift();
-      }
+      if (recentMessages.length > MAX_HISTORY) recentMessages.shift();
+    }
+  });
+
+  // ADMIN CLEAR CHAT
+  socket.on('admin-clear-chat', () => {
+    if (socket.username === ADMIN_SECRET) {
+      console.log('ADMIN CLEARED THE CHAT');
+      recentMessages.length = 0;               // Clear server history
+      io.emit('clear-chat');                   // Tell all clients to clear UI
+      io.emit('message', {                     // Announce the clear
+        system: true,
+        text: 'Chat was cleared by an admin.'
+      });
     }
   });
 
