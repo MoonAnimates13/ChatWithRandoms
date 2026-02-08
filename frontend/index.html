@@ -51,6 +51,8 @@
       border-bottom: 1px solid #333;
       flex-shrink: 0;
       font-size: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
     }
     #messages {
       flex: 1;
@@ -140,21 +142,32 @@
       cursor: pointer;
       border-radius: 30px;
       font-size: 15px;
+      white-space: nowrap;
     }
     #image-btn { background: #444; }
     #clear-chat-btn { background: #d32f2f; display: none; }
     #chaos-toggle-btn { background: #ff5722; display: none; }
     #tempo-toggle-btn { background: #9c27b0; display: none; }
+    #ban-btn { background: #d32f2f; display: none; padding: 10px 16px; }
+    #unban-btn { background: #4caf50; display: none; padding: 10px 16px; }
     #reset-profile { background: #555; font-size: 13px; padding: 8px 14px; }
     #online { color: #4caf50; font-weight: bold; }
     input[type="text"] {
       padding: 14px 18px;
       border: none;
       border-radius: 30px;
-      width: 300px;
       font-size: 16px;
       background: #333;
       color: white;
+    }
+    #ban-username-input {
+      padding: 8px 14px;
+      border-radius: 20px;
+      background: #333;
+      color: white;
+      border: none;
+      min-width: 180px;
+      display: none;
     }
     #spam-toast {
       position: absolute;
@@ -255,10 +268,13 @@
     <div id="chat">
       <div id="header">
         <div id="online">Online: 0</div>
-        <div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
           <button id="clear-chat-btn" onclick="clearAllChats()">Clear All Chats</button>
           <button id="chaos-toggle-btn" onclick="toggleChaos()">Toggle Chaos</button>
           <button id="tempo-toggle-btn" onclick="toggleTempo()">Tempo Meme</button>
+          <input id="ban-username-input" type="text" placeholder="Username to ban/unban" />
+          <button id="ban-btn" onclick="adminBan()">Ban User</button>
+          <button id="unban-btn" onclick="adminUnban()">Unban User</button>
           <button id="reset-profile" onclick="resetProfile()">Change Profile</button>
         </div>
       </div>
@@ -280,7 +296,7 @@
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
     const socket = io('https://chat-randoms-backend.onrender.com');
-    const ADMIN_SECRET = 'Admin-87a6d987asdt8yaguksdghfas7d!';
+    const ADMIN_SECRET = 'Admin-87a6d987asdt8yaguksdghfas7d';
     let myUsername = localStorage.getItem('chatUsername') || '';
     let myAvatarURL = localStorage.getItem('chatAvatarURL') || '';
     const nameScreen = document.getElementById('name-screen');
@@ -294,6 +310,9 @@
     const clearChatBtn = document.getElementById('clear-chat-btn');
     const chaosToggleBtn = document.getElementById('chaos-toggle-btn');
     const tempoToggleBtn = document.getElementById('tempo-toggle-btn');
+    const banInput = document.getElementById('ban-username-input');
+    const banBtn = document.getElementById('ban-btn');
+    const unbanBtn = document.getElementById('unban-btn');
     const spamToast = document.getElementById('spam-toast');
     const chaosOverlay = document.getElementById('chaos-overlay');
     const tempoOverlay = document.getElementById('tempo-overlay');
@@ -333,6 +352,9 @@
       clearChatBtn.style.display = isAdmin ? 'inline-block' : 'none';
       chaosToggleBtn.style.display = isAdmin ? 'inline-block' : 'none';
       tempoToggleBtn.style.display = isAdmin ? 'inline-block' : 'none';
+      banBtn.style.display = isAdmin ? 'inline-block' : 'none';
+      unbanBtn.style.display = isAdmin ? 'inline-block' : 'none';
+      banInput.style.display = isAdmin ? 'inline-block' : 'none';
     }
 
     function clearAllChats() {
@@ -452,16 +474,11 @@
     function spawnKraters() {
       chaosOverlay.innerHTML = '';
 
-      // Your requested album: https://imgur.com/a/WbLTEYX
-      // Unfortunately it's dead/empty now — no images load from it.
-      // Using reliable direct links to the classic "Krater" (smoking caterpillar) instead:
       const kraterImages = [
-        'https://c.tenor.com/OacC9jUhkgQAAAAC/tenor.gif',                                      // another solid one
-        // If you re-upload to Imgur and get new direct links (e.g. https://i.imgur.com/NEWID.png),
-        // add them here like: 'https://i.imgur.com/NEWID.png',
+        'https://c.tenor.com/OacC9jUhkgQAAAAC/tenor.gif'
       ];
 
-      const kraterCount = Math.min(64 + chaosLevel * 4, 80);
+      const kraterCount = Math.min(40 + chaosLevel * 4, 80);
 
       for (let i = 0; i < kraterCount; i++) {
         const krater = document.createElement('div');
@@ -490,8 +507,8 @@
         krater.style.setProperty('--dx', `${dx}vw`);
         krater.style.setProperty('--dy', `${dy}vh`);
 
-        const baseDuration = 0.2 - (chaosLevel * 0.054);
-        const duration = Math.max(0.18, baseDuration);
+        const baseDuration = 1.3 - (chaosLevel * 0.065);
+        const duration = Math.max(0.20, baseDuration);
         const direction = Math.random() > 0.5 ? 2160 : -2160;
         krater.style.animation = `kraterFly ${duration}s ease-in-out forwards`;
         krater.style.setProperty('--rotate-end', `${direction}deg`);
@@ -574,6 +591,28 @@
         tempoAudio.pause();
         tempoOverlay.style.animation = '';
       }
+    });
+
+    // Ban / Unban functions
+    function adminBan() {
+      const target = banInput.value.trim();
+      if (!target) return alert('Enter a username to ban!');
+      socket.emit('admin-ban-user', target);
+      banInput.value = '';
+    }
+
+    function adminUnban() {
+      const target = banInput.value.trim();
+      if (!target) return alert('Enter a username to unban!');
+      socket.emit('admin-unban-user', target);
+      banInput.value = '';
+    }
+
+    socket.on('banned', (data) => {
+      alert(`You are banned: ${data.reason || 'No reason provided.'}`);
+      document.body.innerHTML = `<div style="color:red; text-align:center; margin-top:40vh; font-size:32px;">
+        BANNED<br><br>${data.reason || 'You have been banned from this chat.'}
+      </div>`;
     });
   </script>
 </body>
