@@ -91,6 +91,12 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('admin-toggle-tempo', (enable) => {
+    if (socket.username === ADMIN_SECRET) {
+      io.emit('tempo-toggle', enable);
+    }
+  });
+
   socket.on('disconnect', () => {
     onlineUsers--;
     lastMessageTime.delete(socket.id);
