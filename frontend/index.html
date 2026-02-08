@@ -174,7 +174,7 @@
     }
     #spam-toast.visible { opacity: 1; }
 
-    /* CHAOS OVERLAY */
+    /* CHAOS OVERLAY - FULL INSANITY */
     #chaos-overlay {
       position: fixed;
       top: 0; left: 0;
@@ -188,30 +188,35 @@
     #chaos-overlay.active { display: block; }
     .worm {
       position: absolute;
-      width: 120px;
-      height: 120px;
+      width: 150px;
+      height: 150px;
       background: url('https://preview.redd.it/gj65cdzde2u71.gif?format=png8&s=19e958b199f80e237e3bde960d113459cd01e95d') center/contain no-repeat;
-      filter: drop-shadow(0 0 20px #ff00ff);
+      filter: drop-shadow(0 0 30px #ff00ff) hue-rotate(0deg);
+      animation: spinFly 2s linear infinite;
+    }
+    @keyframes spinFly {
+      0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) rotate(720deg) scale(0.5); opacity: 0; }
     }
     #chaos-overlay.strobe {
-      animation: rainbow-strobe 0.08s infinite alternate;
+      animation: insane-strobe 0.06s infinite alternate;
     }
-    @keyframes rainbow-strobe {
-      0%   { background: rgba(255,0,255,0.15); }
-      25%  { background: rgba(0,255,255,0.15); }
-      50%  { background: rgba(255,255,0,0.15); }
-      75%  { background: rgba(255,0,0,0.15); }
-      100% { background: rgba(0,255,0,0.15); }
+    @keyframes insane-strobe {
+      0%   { background: rgba(255,0,255,0.3); filter: invert(1); }
+      25%  { background: rgba(0,255,255,0.3); filter: invert(0); }
+      50%  { background: rgba(255,255,0,0.3); filter: invert(1); }
+      75%  { background: rgba(255,0,0,0.3); filter: invert(0); }
+      100% { background: rgba(0,255,0,0.3); filter: invert(1); }
     }
     .shake {
-      animation: ultra-shake 0.1s infinite linear;
+      animation: psycho-shake 0.05s infinite linear;
     }
-    @keyframes ultra-shake {
-      0%   { transform: translate(0,0) rotate(0deg); }
-      25%  { transform: translate(12px,-12px) rotate(3deg); }
-      50%  { transform: translate(-12px,12px) rotate(-3deg); }
-      75%  { transform: translate(12px,12px) rotate(3deg); }
-      100% { transform: translate(-12px,-12px) rotate(-3deg); }
+    @keyframes psycho-shake {
+      0%   { transform: translate(0,0) rotate(0deg) scale(1); }
+      25%  { transform: translate(20px,-20px) rotate(5deg) scale(1.05); }
+      50%  { transform: translate(-20px,20px) rotate(-5deg) scale(0.95); }
+      75%  { transform: translate(20px,20px) rotate(5deg) scale(1.1); }
+      100% { transform: translate(-20px,-20px) rotate(-5deg) scale(0.9); }
     }
   </style>
 </head>
@@ -408,32 +413,59 @@
       chaosActive = !chaosActive;
       chaosToggleBtn.textContent = chaosActive ? 'STOP CHAOS' : 'Toggle Chaos';
 
+      socket.emit('admin-toggle-chaos', chaosActive);
+
       if (chaosActive) {
         chaosOverlay.classList.add('active', 'strobe');
         container.classList.add('shake');
         chaosLevel = 1;
-        spawnWorms();
+        spawnInsaneWorms();
       } else {
         chaosOverlay.classList.remove('active', 'strobe');
         container.classList.remove('shake');
         chaosOverlay.innerHTML = '';
-        clearTimeout(wormInterval);
+        clearInterval(wormInterval);
       }
     }
 
-    function spawnWorms() {
+    function spawnInsaneWorms() {
       chaosOverlay.innerHTML = '';
-      for (let i = 0; i < 15; i++) {
+      for (let i = 0; i < 20; i++) {
         const worm = document.createElement('div');
         worm.className = 'worm';
-        worm.style.left = Math.random() * 100 + 'vw';
-        worm.style.top = Math.random() * 100 + 'vh';
-        worm.style.transform = `rotate(${Math.random() * 360}deg)`;
-        worm.style.animation = `flyAndSpin ${3 / chaosLevel}s linear infinite`;
+        const side = Math.floor(Math.random() * 4);
+        let startX, startY, endX, endY;
+        if (side === 0) { // top
+          startX = Math.random() * 100;
+          startY = -20;
+          endX = startX + (Math.random() - 0.5) * 300;
+          endY = 120;
+        } else if (side === 1) { // right
+          startX = 120;
+          startY = Math.random() * 100;
+          endX = -20;
+          endY = startY + (Math.random() - 0.5) * 300;
+        } else if (side === 2) { // bottom
+          startX = Math.random() * 100;
+          startY = 120;
+          endX = startX + (Math.random() - 0.5) * 300;
+          endY = -20;
+        } else { // left
+          startX = -20;
+          startY = Math.random() * 100;
+          endX = 120;
+          endY = startY + (Math.random() - 0.5) * 300;
+        }
+        worm.style.setProperty('--dx', `${endX}vw`);
+        worm.style.setProperty('--dy', `${endY}vh`);
+        worm.style.left = `${startX}vw`;
+        worm.style.top = `${startY}vh`;
+        worm.style.animationDuration = `${2 / chaosLevel}s`;
+        worm.style.animationDelay = `${Math.random() * 0.5}s`;
         chaosOverlay.appendChild(worm);
       }
-      wormInterval = setTimeout(spawnWorms, 300 / chaosLevel);
-      chaosLevel = Math.min(chaosLevel + 0.3, 5);
+      wormInterval = setTimeout(spawnInsaneWorms, 200 / chaosLevel);
+      chaosLevel = Math.min(chaosLevel + 0.4, 8);
     }
 
     socket.on('chaos-toggle', (enable) => {
@@ -443,12 +475,12 @@
         chaosOverlay.classList.add('active', 'strobe');
         container.classList.add('shake');
         chaosLevel = 1;
-        spawnWorms();
+        spawnInsaneWorms();
       } else {
         chaosOverlay.classList.remove('active', 'strobe');
         container.classList.remove('shake');
         chaosOverlay.innerHTML = '';
-        clearTimeout(wormInterval);
+        clearInterval(wormInterval);
       }
     });
   </script>
