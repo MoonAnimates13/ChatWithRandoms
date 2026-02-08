@@ -144,6 +144,7 @@
     #image-btn { background: #444; }
     #clear-chat-btn { background: #d32f2f; display: none; }
     #chaos-toggle-btn { background: #ff5722; display: none; }
+    #tempo-toggle-btn { background: #9c27b0; display: none; }
     #reset-profile { background: #555; font-size: 13px; padding: 8px 14px; }
     #online { color: #4caf50; font-weight: bold; }
     input[type="text"] {
@@ -174,7 +175,6 @@
     }
     #spam-toast.visible { opacity: 1; }
 
-    /* CHAOS OVERLAY - KRATER EVERYWHERE */
     #chaos-overlay {
       position: fixed;
       top: 0; left: 0;
@@ -190,27 +190,28 @@
       position: absolute;
       background: url('https://preview.redd.it/gj65cdzde2u71.gif?format=png8&s=19e958b199f80e237e3bde960d113459cd01e95d') center/contain no-repeat;
       filter: drop-shadow(0 0 30px #ff00ff);
-      opacity: 0.85;
+      opacity: 0.9;
     }
     @keyframes kraterFly {
-      0%   { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 0.85; }
-      100% { transform: translate(var(--dx), var(--dy)) rotate(2160deg) scale(0.2); opacity: 0; }
+      0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 0.9; }
+      100% { transform: translate(var(--dx), var(--dy)) rotate(2160deg) scale(0.15); opacity: 0; }
     }
     #chaos-overlay.strobe {
       animation: krater-strobe 0.04s infinite alternate;
     }
     @keyframes krater-strobe {
-      0%   { background: rgba(255,0,255,0.5); filter: invert(1) brightness(1.5); }
-      100% { background: rgba(0,255,0,0.5); filter: invert(0) brightness(0.8); }
+      0%   { background: rgba(255,0,255,0.5); filter: invert(1) brightness(1.6); }
+      100% { background: rgba(0,255,0,0.5); filter: invert(0) brightness(0.7); }
     }
     .shake {
       animation: krater-shake 0.03s infinite linear;
     }
     @keyframes krater-shake {
       0%, 100% { transform: translate(0,0) rotate(0deg) scale(1); }
-      25%  { transform: translate(30px,-30px) rotate(8deg) scale(1.1); }
-      50%  { transform: translate(-30px,30px) rotate(-8deg) scale(0.9); }
-      75%  { transform: translate(30px,30px) rotate(8deg) scale(1.15); }
+      20%  { transform: translate(35px,-35px) rotate(10deg) scale(1.15); }
+      40%  { transform: translate(-35px,35px) rotate(-10deg) scale(0.85); }
+      60%  { transform: translate(35px,35px) rotate(10deg) scale(1.2); }
+      80%  { transform: translate(-35px,-35px) rotate(-10deg) scale(0.8); }
     }
   </style>
 </head>
@@ -230,6 +231,7 @@
         <div>
           <button id="clear-chat-btn" onclick="clearAllChats()">Clear All Chats</button>
           <button id="chaos-toggle-btn" onclick="toggleChaos()">Toggle Chaos</button>
+          <button id="tempo-toggle-btn" onclick="toggleTempo()">Tempo Meme</button>
           <button id="reset-profile" onclick="resetProfile()">Change Profile</button>
         </div>
       </div>
@@ -245,6 +247,7 @@
   </div>
 
   <div id="chaos-overlay"></div>
+  <div id="tempo-overlay"></div>
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
@@ -265,13 +268,17 @@
     const imageUpload = document.getElementById('image-upload');
     const clearChatBtn = document.getElementById('clear-chat-btn');
     const chaosToggleBtn = document.getElementById('chaos-toggle-btn');
+    const tempoToggleBtn = document.getElementById('tempo-toggle-btn');
     const spamToast = document.getElementById('spam-toast');
     const chaosOverlay = document.getElementById('chaos-overlay');
+    const tempoOverlay = document.getElementById('tempo-overlay');
     const container = document.getElementById('container');
 
     let chaosActive = false;
     let chaosLevel = 1;
     let kraterInterval;
+    let tempoActive = false;
+    let tempoAudio = new Audio('https://www.myinstants.com/media/sounds/not-quite-my-tempo.mp3');
 
     if (myUsername) autoJoin();
 
@@ -299,6 +306,7 @@
       const isAdmin = (myUsername === ADMIN_SECRET);
       clearChatBtn.style.display = isAdmin ? 'inline-block' : 'none';
       chaosToggleBtn.style.display = isAdmin ? 'inline-block' : 'none';
+      tempoToggleBtn.style.display = isAdmin ? 'inline-block' : 'none';
     }
 
     function clearAllChats() {
@@ -423,35 +431,36 @@
     }
 
     function spawnKraters() {
-      for (let i = 0; i < 20; i++) {
+      chaosOverlay.innerHTML = '';
+      for (let i = 0; i < 45; i++) {
         const krater = document.createElement('div');
         krater.className = 'krater';
-        const size = 80 + Math.random() * 220; // different sizes: 80px to 300px
+        const size = 80 + Math.random() * 240;
         krater.style.width = size + 'px';
         krater.style.height = size + 'px';
 
         const side = Math.floor(Math.random() * 8);
         let startX, startY, dx, dy;
-        if (side === 0) { startX = Math.random()*120; startY = -40; dx = (Math.random()-0.5)*600; dy = 180; }
-        else if (side === 1) { startX = 140; startY = Math.random()*120; dx = -180; dy = (Math.random()-0.5)*600; }
-        else if (side === 2) { startX = Math.random()*120; startY = 140; dx = (Math.random()-0.5)*600; dy = -180; }
-        else if (side === 3) { startX = -40; startY = Math.random()*120; dx = 180; dy = (Math.random()-0.5)*600; }
-        else if (side === 4) { startX = -40; startY = -40; dx = 180; dy = 180; }
-        else if (side === 5) { startX = 140; startY = -40; dx = -180; dy = 180; }
-        else if (side === 6) { startX = 140; startY = 140; dx = -180; dy = -180; }
-        else { startX = -40; startY = 140; dx = 180; dy = -180; }
+        if (side === 0) { startX = Math.random()*140; startY = -50; dx = (Math.random()-0.5)*700; dy = 200; }
+        else if (side === 1) { startX = 150; startY = Math.random()*140; dx = -200; dy = (Math.random()-0.5)*700; }
+        else if (side === 2) { startX = Math.random()*140; startY = 150; dx = (Math.random()-0.5)*700; dy = -200; }
+        else if (side === 3) { startX = -50; startY = Math.random()*140; dx = 200; dy = (Math.random()-0.5)*700; }
+        else if (side === 4) { startX = -50; startY = -50; dx = 200; dy = 200; }
+        else if (side === 5) { startX = 150; startY = -50; dx = -200; dy = 200; }
+        else if (side === 6) { startX = 150; startY = 150; dx = -200; dy = -200; }
+        else { startX = -50; startY = 150; dx = 200; dy = -200; }
 
         krater.style.left = startX + 'vw';
         krater.style.top = startY + 'vh';
         krater.style.setProperty('--dx', dx + 'vw');
         krater.style.setProperty('--dy', dy + 'vh');
-        krater.style.animation = `kraterFly ${1.2 / chaosLevel}s linear forwards`;
+        krater.style.animation = `kraterFly ${1 / chaosLevel}s ease-in-out forwards`;
         krater.style.animationDelay = `${Math.random() * 0.6}s`;
         chaosOverlay.appendChild(krater);
       }
 
-      kraterInterval = setTimeout(spawnKraters, 120 / chaosLevel);
-      chaosLevel = Math.min(chaosLevel + 0.6, 12);
+      kraterInterval = setTimeout(spawnKraters, 80 / chaosLevel);
+      chaosLevel = Math.min(chaosLevel + 0.8, 18);
     }
 
     socket.on('chaos-toggle', (enable) => {
