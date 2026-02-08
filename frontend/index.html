@@ -120,6 +120,7 @@
       border-top: 1px solid #333;
       gap: 10px;
       flex-shrink: 0;
+      position: relative;
     }
     #input {
       flex: 1;
@@ -153,6 +154,26 @@
       background: #333;
       color: white;
     }
+    #spam-toast {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 87, 34, 0.9);
+      color: white;
+      padding: 10px 24px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: bold;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      z-index: 100;
+      white-space: nowrap;
+    }
+    #spam-toast.visible {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
@@ -179,13 +200,14 @@
         <input type="file" id="image-upload" accept="image/*" style="display:none;" />
         <button id="image-btn" onclick="document.getElementById('image-upload').click()">Photo</button>
         <button onclick="sendMessage()">Send</button>
+        <div id="spam-toast">Don't spam!</div>
       </div>
     </div>
   </div>
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
-    const socket = io('https://chat-randoms-backend.onrender.com/'); // ← CHANGE THIS
+    const socket = io('https://chat-randoms-backend.onrender.com');
 
     const ADMIN_SECRET = 'Admin-87a6d987asdt8yaguksdghfas7d';
 
@@ -201,6 +223,7 @@
     const online = document.getElementById('online');
     const imageUpload = document.getElementById('image-upload');
     const clearChatBtn = document.getElementById('clear-chat-btn');
+    const spamToast = document.getElementById('spam-toast');
 
     if (myUsername) autoJoin();
 
@@ -246,23 +269,38 @@
       location.reload();
     }
 
+    function showSpamWarning() {
+      spamToast.classList.add('visible');
+      setTimeout(() => spamToast.classList.remove('visible'), 2000);
+    }
+
     function sendMessage() {
       const msg = input.value.trim();
-      if (msg) {
-        socket.emit('chat message', msg);
-        input.value = '';
-      }
+      if (!msg) return;
+      socket.emit('chat message', msg, (success) => {
+        if (success) {
+          input.value = '';
+        } else {
+          showSpamWarning();
+        }
+      });
     }
 
     imageUpload.addEventListener('change', e => {
       const file = e.target.files[0];
       if (!file || file.size > 2*1024*1024) return alert('Max 2MB');
       const reader = new FileReader();
-      reader.onload = ev => socket.emit('image', { buffer: ev.target.result, mime: file.type });
+      reader.onload = ev => {
+        socket.emit('image', { buffer: ev.target.result, mime: file.type }, (success) => {
+          if (!success) showSpamWarning();
+        });
+      };
       reader.readAsArrayBuffer(file);
     });
 
-    input.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+    input.addEventListener('keypress', e => {
+      if (e.key === 'Enter') sendMessage();
+    });
 
     function addSystemMessage(text) {
       const li = document.createElement('li');
