@@ -490,7 +490,7 @@
         krater.style.setProperty('--dx', `${dx}vw`);
         krater.style.setProperty('--dy', `${dy}vh`);
 
-        const baseDuration = 1.0 - (chaosLevel * 0.055);
+        const baseDuration = 0.2 - (chaosLevel * 0.054);
         const duration = Math.max(0.18, baseDuration);
         const direction = Math.random() > 0.5 ? 2160 : -2160;
         krater.style.animation = `kraterFly ${duration}s ease-in-out forwards`;
