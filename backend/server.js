@@ -6,6 +6,8 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 
+const ADMIN_PASSWORD = 'change-this-to-a-very-strong-password-2025'; // ← CHANGE THIS
+
 const bannedUsernames = new Set();
 const bannedIPs = new Set();
 const userLastIP = new Map();
@@ -15,8 +17,6 @@ let onlineUsers = 0;
 const recentMessages = [];
 const MAX_HISTORY = 100;
 const lastMessageTime = new Map();
-
-const ADMIN_SECRET = 'Admin-19671290yds87qatd78012epasgf8d5!!!!';
 
 function getClientIP(socket) {
   const forwarded = socket.handshake.headers['x-forwarded-for'];
@@ -30,7 +30,7 @@ function sendBanListToAdmins() {
     ip: userLastIP.get(lowerName) || null
   }));
   for (const client of io.sockets.sockets.values()) {
-    if (client.username === ADMIN_SECRET) {
+    if (client.isAdmin) {
       client.emit('ban-list-update', { bannedUsernames: banList });
     }
   }
@@ -48,6 +48,13 @@ io.on('connection', (socket) => {
   onlineUsers++;
   io.emit('online', onlineUsers);
 
+  socket.on('verify-admin', (password, callback) => {
+    const success = (password === ADMIN_PASSWORD);
+    socket.isAdmin = success;
+    callback(success);
+    if (success) sendBanListToAdmins();
+  });
+
   socket.on('join', (data) => {
     const { name, avatarURL } = data;
     const username = (name || 'Anonymous').trim();
@@ -64,15 +71,9 @@ io.on('connection', (socket) => {
     userAvatars[username] = socket.avatarURL;
     userLastIP.set(lowerUsername, clientIP);
 
-    if (username !== ADMIN_SECRET) {
-      io.emit('message', { system: true, text: `${username} joined the chat!` });
-    }
+    io.emit('message', { system: true, text: `${username} joined the chat!` });
 
     if (recentMessages.length > 0) socket.emit('history', recentMessages);
-
-    if (username === ADMIN_SECRET) {
-      sendBanListToAdmins();
-    }
   });
 
   socket.on('chat message', (msg, callback) => {
@@ -102,23 +103,24 @@ io.on('connection', (socket) => {
   });
 
   socket.on('admin-clear-chat', () => {
-    if (socket.username === ADMIN_SECRET) {
-      recentMessages.length = 0;
-      io.emit('clear-chat');
-      io.emit('message', { system: true, text: 'Chat was cleared by admin.' });
-    }
+    if (!socket.isAdmin) return;
+    recentMessages.length = 0;
+    io.emit('clear-chat');
+    io.emit('message', { system: true, text: 'Chat was cleared by admin.' });
   });
 
   socket.on('admin-toggle-chaos', (enable) => {
-    if (socket.username === ADMIN_SECRET) io.emit('chaos-toggle', enable);
+    if (!socket.isAdmin) return;
+    io.emit('chaos-toggle', enable);
   });
 
   socket.on('admin-toggle-tempo', (enable) => {
-    if (socket.username === ADMIN_SECRET) io.emit('tempo-toggle', enable);
+    if (!socket.isAdmin) return;
+    io.emit('tempo-toggle', enable);
   });
 
   socket.on('admin-ban-user', (targetUsername) => {
-    if (socket.username !== ADMIN_SECRET) return;
+    if (!socket.isAdmin) return;
     const lowerName = targetUsername.trim().toLowerCase();
     if (!lowerName) return;
     bannedUsernames.add(lowerName);
@@ -135,7 +137,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('admin-unban-user', (targetUsername) => {
-    if (socket.username !== ADMIN_SECRET) return;
+    if (!socket.isAdmin) return;
     const lowerName = targetUsername.trim().toLowerCase();
     if (!lowerName) return;
     bannedUsernames.delete(lowerName);
@@ -148,7 +150,7 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     onlineUsers--;
     lastMessageTime.delete(socket.id);
-    if (socket.username && socket.username !== ADMIN_SECRET) {
+    if (socket.username) {
       io.emit('message', { system: true, text: `${socket.username} left the chat.` });
     }
     io.emit('online', onlineUsers);
