@@ -64,7 +64,6 @@ io.on('connection', (socket) => {
     userAvatars[username] = socket.avatarURL;
     userLastIP.set(lowerUsername, clientIP);
 
-    // Show join/leave ONLY for normal users
     if (username !== ADMIN_SECRET) {
       io.emit('message', { system: true, text: `${username} joined the chat!` });
     }
@@ -77,29 +76,29 @@ io.on('connection', (socket) => {
   });
 
   socket.on('chat message', (msg, callback) => {
-    if (!socket.username || !msg.trim()) return callback && callback(false);
+    if (!socket.username || !msg.trim()) return callback?.(false);
     const now = Date.now();
     const last = lastMessageTime.get(socket.id) || 0;
-    if (now - last < 1500) return callback && callback(false);
+    if (now - last < 1500) return callback?.(false);
     lastMessageTime.set(socket.id, now);
     const messageData = { username: socket.username, avatarURL: socket.avatarURL, text: msg.trim(), isImage: false };
     io.emit('message', messageData);
     recentMessages.push(messageData);
     if (recentMessages.length > MAX_HISTORY) recentMessages.shift();
-    callback && callback(true);
+    callback?.(true);
   });
 
   socket.on('image', (data, callback) => {
-    if (!socket.username) return callback && callback(false);
+    if (!socket.username) return callback?.(false);
     const now = Date.now();
     const last = lastMessageTime.get(socket.id) || 0;
-    if (now - last < 3000) return callback && callback(false);
+    if (now - last < 3000) return callback?.(false);
     lastMessageTime.set(socket.id, now);
     const messageData = { username: socket.username, avatarURL: socket.avatarURL, image: data.buffer, mime: data.mime, isImage: true };
     io.emit('message', messageData);
     recentMessages.push(messageData);
     if (recentMessages.length > MAX_HISTORY) recentMessages.shift();
-    callback && callback(true);
+    callback?.(true);
   });
 
   socket.on('admin-clear-chat', () => {
