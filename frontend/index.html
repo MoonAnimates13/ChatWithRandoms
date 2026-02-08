@@ -142,11 +142,11 @@
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
-    // ────────────────────────────────────────────────
-    // REPLACE THIS WITH YOUR ACTUAL RENDER BACKEND URL
-    const socket = io('https://your-backend-name.onrender.com');
-    // Example: 'https://chatwithrandoms-backend.onrender.com'
-    // ────────────────────────────────────────────────
+    
+    
+    const socket = io('https://chat-randoms-backend.onrender.com/');
+    
+    
 
     const nameScreen = document.getElementById('name-screen');
     const chat = document.getElementById('chat');
@@ -172,7 +172,7 @@
       }
     }
 
-    // Image upload handler
+    
     imageUpload.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file || !file.type.startsWith('image/')) return;
@@ -185,7 +185,7 @@
       const reader = new FileReader();
       reader.onload = (event) => {
         socket.emit('image', {
-          buffer: event.target.result,  // ArrayBuffer
+          buffer: event.target.result,  
           mime: file.type
         });
       };
@@ -196,12 +196,12 @@
       if (e.key === 'Enter') sendMessage();
     });
 
-    // Receive single message (text or image)
+    
     socket.on('message', (data) => {
       appendMessage(data);
     });
 
-    // Receive chat history when joining
+    
     socket.on('history', (history) => {
       history.forEach(appendMessage);
     });
@@ -229,7 +229,7 @@
       online.textContent = `Online: ${count}`;
     });
 
-    // Helper: ArrayBuffer → base64 for img src
+    
     function arrayBufferToBase64(buffer) {
       let binary = '';
       const bytes = new Uint8Array(buffer);
