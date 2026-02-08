@@ -6,144 +6,28 @@
   <title>ChatWithRandoms.com</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      font-family: system-ui, -apple-system, Arial, sans-serif;
-      background: #111;
-      color: #eee;
-    }
-    #container {
-      width: 100%;
-      max-width: 720px;
-      height: 100vh;
-      margin: 0 auto;
-      background: #222;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    #name-screen {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      padding: 20px;
-      gap: 12px;
-    }
-    #chat {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      display: none;
-      overflow: hidden;
-    }
-    #header {
-      background: #1a1a1a;
-      padding: 12px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #333;
-      flex-shrink: 0;
-      font-size: 14px;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    #messages {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 16px;
-      margin: 0;
-      background: #000;
-      scroll-behavior: smooth;
-      -webkit-overflow-scrolling: touch;
-    }
+    html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: system-ui, -apple-system, Arial, sans-serif; background: #111; color: #eee; }
+    #container { width: 100%; max-width: 720px; height: 100vh; margin: 0 auto; background: #222; display: flex; flex-direction: column; overflow: hidden; }
+    #name-screen { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; gap: 12px; }
+    #chat { flex: 1; display: flex; flex-direction: column; display: none; overflow: hidden; }
+    #header { background: #1a1a1a; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; flex-shrink: 0; font-size: 14px; flex-wrap: wrap; gap: 8px; }
+    #messages { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px; margin: 0; background: #000; scroll-behavior: smooth; }
     #messages::-webkit-scrollbar { width: 8px; }
     #messages::-webkit-scrollbar-track { background: transparent; }
     #messages::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-    #messages li {
-      display: flex;
-      align-items: flex-start;
-      margin: 12px 0;
-      padding: 10px 14px;
-      border-radius: 16px;
-      background: #333;
-      max-width: 85%;
-      word-wrap: break-word;
-      line-height: 1.4;
-    }
-    #messages li.me {
-      margin-left: auto;
-      background: #007bff;
-      color: white;
-    }
-    #messages .avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      margin-right: 12px;
-      object-fit: cover;
-      flex-shrink: 0;
-      border: 2px solid #555;
-    }
+    #messages li { display: flex; align-items: flex-start; margin: 12px 0; padding: 10px 14px; border-radius: 16px; background: #333; max-width: 85%; word-wrap: break-word; line-height: 1.4; }
+    #messages li.me { margin-left: auto; background: #007bff; color: white; }
+    #messages .avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 12px; object-fit: cover; flex-shrink: 0; border: 2px solid #555; }
     #messages .content { flex: 1; }
     #messages .username { font-weight: bold; margin-right: 6px; }
     #messages img.chat-img { max-width: 280px; border-radius: 10px; margin-top: 8px; display: block; }
-    #messages .delete-btn {
-      background: none;
-      border: none;
-      color: #ff7777;
-      font-size: 22px;
-      cursor: pointer;
-      margin-left: 10px;
-      opacity: 0.7;
-    }
+    #messages .delete-btn { background: none; border: none; color: #ff7777; font-size: 22px; cursor: pointer; margin-left: 10px; opacity: 0.7; }
     #messages .delete-btn:hover { opacity: 1; }
-    #messages .system {
-      margin: 20px auto;
-      padding: 10px 20px;
-      background: #444;
-      color: #ccc;
-      font-style: italic;
-      border-radius: 20px;
-      text-align: center;
-      font-size: 14px;
-    }
-    #input-area {
-      display: flex;
-      padding: 12px 16px;
-      background: #1a1a1a;
-      border-top: 1px solid #333;
-      gap: 10px;
-      flex-shrink: 0;
-      position: relative;
-    }
-    #input {
-      flex: 1;
-      padding: 14px 18px;
-      border: none;
-      border-radius: 30px;
-      background: #2a2a2a;
-      color: #eee;
-      font-size: 16px;
-    }
+    #messages .system { margin: 20px auto; padding: 10px 20px; background: #444; color: #ccc; font-style: italic; border-radius: 20px; text-align: center; font-size: 14px; }
+    #input-area { display: flex; padding: 12px 16px; background: #1a1a1a; border-top: 1px solid #333; gap: 10px; flex-shrink: 0; position: relative; }
+    #input { flex: 1; padding: 14px 18px; border: none; border-radius: 30px; background: #2a2a2a; color: #eee; font-size: 16px; }
     #input:focus { outline: none; background: #333; }
-    button {
-      padding: 14px 20px;
-      background: #007bff;
-      border: none;
-      color: white;
-      cursor: pointer;
-      border-radius: 30px;
-      font-size: 15px;
-      white-space: nowrap;
-    }
+    button { padding: 14px 20px; background: #007bff; border: none; color: white; cursor: pointer; border-radius: 30px; font-size: 15px; white-space: nowrap; }
     #image-btn { background: #444; }
     #clear-chat-btn { background: #d32f2f; display: none; }
     #chaos-toggle-btn { background: #ff5722; display: none; }
@@ -152,140 +36,26 @@
     #unban-btn { background: #4caf50; display: none; padding: 10px 16px; }
     #reset-profile { background: #555; font-size: 13px; padding: 8px 14px; }
     #online { color: #4caf50; font-weight: bold; }
-    input[type="text"] {
-      padding: 14px 18px;
-      border: none;
-      border-radius: 30px;
-      font-size: 16px;
-      background: #333;
-      color: white;
-    }
-    #ban-username-input {
-      padding: 8px 14px;
-      border-radius: 20px;
-      background: #333;
-      color: white;
-      border: none;
-      min-width: 180px;
-      display: none;
-    }
-    #spam-toast {
-      position: absolute;
-      bottom: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255, 87, 34, 0.9);
-      color: white;
-      padding: 10px 24px;
-      border-radius: 30px;
-      font-size: 14px;
-      font-weight: bold;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.4s ease;
-      z-index: 100;
-      white-space: nowrap;
-    }
+    input[type="text"] { padding: 14px 18px; border: none; border-radius: 30px; font-size: 16px; background: #333; color: white; }
+    #ban-username-input { padding: 8px 14px; border-radius: 20px; background: #333; color: white; border: none; min-width: 180px; display: none; }
+    #spam-toast { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(255,87,34,0.9); color: white; padding: 10px 24px; border-radius: 30px; font-size: 14px; font-weight: bold; opacity: 0; pointer-events: none; transition: opacity 0.4s; z-index: 100; white-space: nowrap; }
     #spam-toast.visible { opacity: 1; }
-    #chaos-overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      pointer-events: none;
-      z-index: 9999;
-      overflow: hidden;
-      display: none;
-    }
+    #chaos-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; overflow: hidden; display: none; }
     #chaos-overlay.active { display: block; }
-    .krater {
-      position: absolute;
-      background-size: contain;
-      background-position: center;
-      background-repeat: no-repeat;
-      filter: drop-shadow(0 0 30px #00ff9d) drop-shadow(0 0 60px #ff00ff);
-      opacity: 0.92;
-      pointer-events: none;
-    }
-    @keyframes kraterFly {
-      0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 0.92; }
-      100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rotate-end, 2160deg)) scale(0.15); opacity: 0; }
-    }
-    #chaos-overlay.strobe {
-      animation: krater-strobe 0.04s infinite alternate;
-    }
-    @keyframes krater-strobe {
-      0% { background: rgba(255,0,255,0.5); filter: invert(1) brightness(1.6); }
-      100% { background: rgba(0,255,0,0.5); filter: invert(0) brightness(0.7); }
-    }
-    .shake {
-      animation: krater-shake 0.03s infinite linear;
-    }
-    @keyframes krater-shake {
-      0%, 100% { transform: translate(0,0) rotate(0deg) scale(1); }
-      10% { transform: translate(60px,-60px) rotate(18deg) scale(1.3); }
-      30% { transform: translate(-60px,60px) rotate(-18deg) scale(0.7); }
-      50% { transform: translate(80px, -40px) rotate(25deg) scale(1.4); }
-      70% { transform: translate(-80px,40px) rotate(-25deg) scale(0.6); }
-      90% { transform: translate(40px, -80px) rotate(15deg) scale(1.2); }
-    }
-    #tempo-overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0,0,0,0.85);
-      z-index: 10000;
-      display: none;
-      justify-content: center;
-      align-items: center;
-      pointer-events: none;
-    }
+    .krater { position: absolute; background-size: contain; background-position: center; background-repeat: no-repeat; filter: drop-shadow(0 0 30px #00ff9d) drop-shadow(0 0 60px #ff00ff); opacity: 0.92; pointer-events: none; }
+    @keyframes kraterFly { 0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 0.92; } 100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rotate-end, 2160deg)) scale(0.15); opacity: 0; } }
+    #chaos-overlay.strobe { animation: krater-strobe 0.04s infinite alternate; }
+    @keyframes krater-strobe { 0% { background: rgba(255,0,255,0.5); filter: invert(1) brightness(1.6); } 100% { background: rgba(0,255,0,0.5); filter: invert(0) brightness(0.7); } }
+    .shake { animation: krater-shake 0.03s infinite linear; }
+    @keyframes krater-shake { 0%,100% { transform: translate(0,0) rotate(0deg) scale(1); } 10% { transform: translate(60px,-60px) rotate(18deg) scale(1.3); } 30% { transform: translate(-60px,60px) rotate(-18deg) scale(0.7); } 50% { transform: translate(80px,-40px) rotate(25deg) scale(1.4); } 70% { transform: translate(-80px,40px) rotate(-25deg) scale(0.6); } 90% { transform: translate(40px,-80px) rotate(15deg) scale(1.2); } }
+    #tempo-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 10000; display: none; justify-content: center; align-items: center; pointer-events: none; }
     #tempo-overlay.active { display: flex; }
-    #tempo-img {
-      max-width: 80%;
-      max-height: 80%;
-      border-radius: 20px;
-      box-shadow: 0 0 60px #ff0000;
-      animation: explodeTempo 5s forwards;
-    }
-    @keyframes explodeTempo {
-      0% { transform: scale(1) rotate(0deg); opacity: 1; }
-      80% { transform: scale(2.5) rotate(720deg); opacity: 1; }
-      100% { transform: scale(5) rotate(1440deg); opacity: 0; }
-    }
-    #admin-ban-panel {
-      position: fixed;
-      top: 60px;
-      right: 20px;
-      width: 280px;
-      max-height: 80vh;
-      background: rgba(30,30,30,0.92);
-      border: 1px solid #444;
-      border-radius: 12px;
-      padding: 12px;
-      color: #eee;
-      font-size: 13px;
-      overflow-y: auto;
-      z-index: 1000;
-      display: none;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-    }
-    #admin-ban-panel h3 {
-      margin: 0 0 10px 0;
-      font-size: 15px;
-      color: #ff5722;
-    }
-    #ban-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    #ban-list li {
-      padding: 6px 0;
-      border-bottom: 1px solid #333;
-      word-break: break-all;
-    }
+    #tempo-img { max-width: 80%; max-height: 80%; border-radius: 20px; box-shadow: 0 0 60px #ff0000; animation: explodeTempo 5s forwards; }
+    @keyframes explodeTempo { 0% { transform: scale(1) rotate(0deg); opacity: 1; } 80% { transform: scale(2.5) rotate(720deg); opacity: 1; } 100% { transform: scale(5) rotate(1440deg); opacity: 0; } }
+    #admin-ban-panel { position: fixed; top: 60px; right: 20px; width: 280px; max-height: 80vh; background: rgba(30,30,30,0.92); border: 1px solid #444; border-radius: 12px; padding: 12px; color: #eee; font-size: 13px; overflow-y: auto; z-index: 1000; display: none; box-shadow: 0 4px 20px rgba(0,0,0,0.6); }
+    #admin-ban-panel h3 { margin: 0 0 10px 0; font-size: 15px; color: #ff5722; }
+    #ban-list { list-style: none; padding: 0; margin: 0; }
+    #ban-list li { padding: 6px 0; border-bottom: 1px solid #333; word-break: break-all; }
     #ban-list li:last-child { border-bottom: none; }
     #ban-list .username { color: #ff7777; font-weight: bold; }
     #ban-list .ip { color: #aaa; font-size: 11px; }
@@ -400,18 +170,13 @@
     }
 
     function clearAllChats() {
-      if (confirm('Clear chat for EVERYONE right now?')) {
-        socket.emit('admin-clear-chat');
-      }
+      if (confirm('Clear chat for EVERYONE right now?')) socket.emit('admin-clear-chat');
     }
 
     socket.on('clear-chat', () => {
       messages.innerHTML = '';
       addSystemMessage('Chat cleared by admin');
-      // Force scroll to bottom immediately
-      setTimeout(() => {
-        messages.scrollTop = messages.scrollHeight;
-      }, 50);
+      setTimeout(() => messages.scrollTop = messages.scrollHeight, 50);
     });
 
     function resetProfile() {
@@ -460,10 +225,8 @@
     }
 
     function appendMessage(data, isHistory = false) {
-      // Hide admin join/leave messages from everyone (including admin)
-      if (data.system && (data.text.includes(ADMIN_SECRET) || data.text.includes('joined') || data.text.includes('left'))) {
-        return; // skip rendering
-      }
+      // Extra safety: never show admin join/leave even if somehow sent
+      if (data.system && data.text.includes(ADMIN_SECRET)) return;
 
       const li = document.createElement('li');
       if (data.username === myUsername) li.classList.add('me');
@@ -525,26 +288,16 @@
 
     function spawnKraters() {
       chaosOverlay.innerHTML = '';
-
-      const kraterImages = [
-        'https://i.kym-cdn.com/photos/images/original/002/347/450/0e9.png',
-        'https://i.kym-cdn.com/photos/images/newsfeed/002/347/457/4d0.png',
-        'https://i.imgur.com/0ZxKx8L.png'
-      ];
-
+      const kraterImages = ['https://i.kym-cdn.com/photos/images/original/002/347/450/0e9.png','https://i.kym-cdn.com/photos/images/newsfeed/002/347/457/4d0.png','https://i.imgur.com/0ZxKx8L.png'];
       const kraterCount = Math.min(40 + chaosLevel * 4, 80);
-
       for (let i = 0; i < kraterCount; i++) {
         const krater = document.createElement('div');
         krater.className = 'krater';
-
         const size = 50 + Math.random() * 300;
         krater.style.width = `${size}px`;
         krater.style.height = `${size}px`;
-
         const randomImg = kraterImages[Math.floor(Math.random() * kraterImages.length)];
         krater.style.backgroundImage = `url('${randomImg}')`;
-
         const side = Math.floor(Math.random() * 8);
         let startX, startY, dx, dy;
         if      (side === 0) { startX = Math.random()*180; startY = -80; dx = (Math.random()-0.5)*1200; dy = 300 + Math.random()*800; }
@@ -555,28 +308,22 @@
         else if (side === 5) { startX = 180; startY = -80; dx = -(Math.random()*1000 + 200); dy = (Math.random()*1000 + 200); }
         else if (side === 6) { startX = 180; startY = 180; dx = -(Math.random()*1000 + 200); dy = -(Math.random()*1000 + 200); }
         else                 { startX = -80; startY = 180; dx = (Math.random()*1000 + 200); dy = -(Math.random()*1000 + 200); }
-
         krater.style.left = `${startX}vw`;
         krater.style.top  = `${startY}vh`;
         krater.style.setProperty('--dx', `${dx}vw`);
         krater.style.setProperty('--dy', `${dy}vh`);
-
         const baseDuration = 1.3 - (chaosLevel * 0.065);
         const duration = Math.max(0.20, baseDuration);
         const direction = Math.random() > 0.5 ? 2160 : -2160;
         krater.style.animation = `kraterFly ${duration}s ease-in-out forwards`;
         krater.style.setProperty('--rotate-end', `${direction}deg`);
         krater.style.animationDelay = `${Math.random() * 0.4}s`;
-
         const glowIntensity = Math.min(chaosLevel * 8, 120);
         krater.style.filter = `drop-shadow(0 0 ${glowIntensity}px #00ff9d) drop-shadow(0 0 ${glowIntensity*1.5}px #ff00ff)`;
-
         chaosOverlay.appendChild(krater);
       }
-
       const nextSpawnMs = Math.max(200, 900 - (chaosLevel * 60));
       kraterInterval = setTimeout(spawnKraters, nextSpawnMs);
-
       chaosLevel = Math.min(chaosLevel + 1.5, 25);
     }
 
@@ -605,7 +352,7 @@
         tempoAudio.volume = 1.0;
         tempoAudio.playbackRate = 1.0;
         tempoAudio.currentTime = 0;
-        tempoAudio.play().catch(() => console.log('Audio blocked - user interaction needed'));
+        tempoAudio.play().catch(() => {});
         setTimeout(() => {
           tempoOverlay.style.animation = 'explodeTempo 1.5s forwards';
           setTimeout(() => {
@@ -663,29 +410,4 @@
 
     socket.on('ban-list-update', (banData) => {
       const listEl = document.getElementById('ban-list');
-      listEl.innerHTML = '';
-
-      if (banData.bannedUsernames.length === 0) {
-        listEl.innerHTML = '<li style="color:#888;">No bans active</li>';
-        return;
-      }
-
-      banData.bannedUsernames.forEach((entry) => {
-        const li = document.createElement('li');
-        li.innerHTML = `<span class="username">${entry.username}</span>`;
-        if (entry.ip) {
-          li.innerHTML += `<br><span class="ip">Last IP: ${entry.ip}</span>`;
-        }
-        listEl.appendChild(li);
-      });
-    });
-
-    socket.on('banned', (data) => {
-      alert(`You are banned: ${data.reason || 'No reason provided.'}`);
-      document.body.innerHTML = `<div style="color:red; text-align:center; margin-top:40vh; font-size:32px;">
-        BANNED<br><br>${data.reason || 'You have been banned from this chat.'}
-      </div>`;
-    });
-  </script>
-</body>
-</html>
+      list
