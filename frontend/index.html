@@ -5,33 +5,136 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ChatWithRandoms.com</title>
   <style>
-    body { margin:0; font-family: Arial, sans-serif; background:#111; color:#eee; }
-    #container { max-width:700px; margin:20px auto; padding:20px; background:#222; border-radius:10px; }
-    #name-screen { text-align:center; }
-    #chat { display:none; }
-    #messages { list-style:none; padding:0; height:400px; overflow-y:auto; border:1px solid #444; margin-bottom:10px; background:#000; border-radius:5px; }
-    #messages li { padding:8px 12px; margin:5px; border-radius:5px; }
-    #messages .system { background:#333; color:#aaa; text-align:center; font-style:italic; }
-    #input-area { display:flex; }
-    #input { flex:1; padding:12px; border:none; border-radius:5px 0 0 5px; }
-    button { padding:12px 20px; background:#007bff; border:none; color:white; border-radius:0 5px 5px 0; cursor:pointer; }
-    #online { text-align:center; color:#0f0; margin-bottom:10px; }
+    body { 
+      margin:0; 
+      font-family: Arial, sans-serif; 
+      background:#111; 
+      color:#eee; 
+      height:100vh; 
+      display:flex; 
+      justify-content:center; 
+      align-items:center; 
+    }
+    #container { 
+      width:100%; 
+      max-width:720px; 
+      height:95vh; 
+      background:#222; 
+      border-radius:10px; 
+      overflow:hidden; 
+      box-shadow:0 0 20px rgba(0,0,0,0.5); 
+      display:flex; 
+      flex-direction:column; 
+    }
+    #name-screen { 
+      flex:1; 
+      display:flex; 
+      flex-direction:column; 
+      justify-content:center; 
+      align-items:center; 
+      text-align:center; 
+      padding:20px; 
+    }
+    #chat { 
+      flex:1; 
+      display:flex; 
+      flex-direction:column; 
+      display:none; 
+    }
+    #header { 
+      background:#1a1a1a; 
+      padding:12px; 
+      text-align:center; 
+      border-bottom:1px solid #333; 
+    }
+    #messages { 
+      flex:1; 
+      list-style:none; 
+      padding:15px; 
+      margin:0; 
+      overflow-y:auto; 
+      background:#000; 
+    }
+    #messages li { 
+      margin:8px 0; 
+      padding:10px 14px; 
+      border-radius:12px; 
+      max-width:80%; 
+      word-wrap:break-word; 
+    }
+    #messages .system { 
+      background:#333; 
+      color:#aaa; 
+      text-align:center; 
+      font-style:italic; 
+      margin:15px auto; 
+      width:fit-content; 
+      padding:8px 16px; 
+    }
+    #messages img { 
+      max-width:300px; 
+      border-radius:8px; 
+      margin-top:6px; 
+      display:block; 
+    }
+    #input-area { 
+      display:flex; 
+      padding:12px; 
+      background:#1a1a1a; 
+      border-top:1px solid #333; 
+    }
+    #input { 
+      flex:1; 
+      padding:12px; 
+      border:none; 
+      border-radius:20px 0 0 20px; 
+      background:#333; 
+      color:#eee; 
+      font-size:16px; 
+    }
+    #input:focus { 
+      outline:none; 
+      background:#444; 
+    }
+    button { 
+      padding:12px 20px; 
+      background:#007bff; 
+      border:none; 
+      color:white; 
+      cursor:pointer; 
+      font-size:16px; 
+    }
+    #image-btn { 
+      background:#444; 
+      border-radius:0 20px 20px 0; 
+      margin-left:8px; 
+    }
+    #online { 
+      color:#0f0; 
+      font-weight:bold; 
+    }
+    h1 { margin:0 0 20px 0; }
+    input[type="text"], button { border-radius:8px; }
   </style>
 </head>
 <body>
   <div id="container">
     <div id="name-screen">
       <h1>ChatWithRandoms.com</h1>
-      <p>Enter a name to chat with random people worldwide!</p>
-      <input id="name" type="text" placeholder="Your name..." required />
-      <button onclick="join()">Join</button>
+      <p>Enter a name to start chatting with random people worldwide!</p>
+      <input id="name" type="text" placeholder="Your name..." required style="padding:12px; width:280px; margin:10px; font-size:16px;" />
+      <button onclick="join()" style="padding:12px 30px; font-size:18px;">Join Chat</button>
     </div>
 
     <div id="chat">
-      <div id="online">Online: 0</div>
+      <div id="header">
+        <div id="online">Online: 0</div>
+      </div>
       <ul id="messages"></ul>
       <div id="input-area">
         <input id="input" autocomplete="off" placeholder="Type a message and hit Enter..." />
+        <input type="file" id="image-upload" accept="image/*" style="display:none;" />
+        <button id="image-btn" onclick="document.getElementById('image-upload').click()">📷</button>
         <button onclick="sendMessage()">Send</button>
       </div>
     </div>
@@ -39,8 +142,11 @@
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
-    // REPLACE THIS WITH YOUR RENDER BACKEND URL AFTER DEPLOY (e.g. https://yourapp.onrender.com)
-    const socket = io('https://chat-randoms-backend.onrender.com/');
+    // ────────────────────────────────────────────────
+    // REPLACE THIS WITH YOUR ACTUAL RENDER BACKEND URL
+    const socket = io('https://your-backend-name.onrender.com');
+    // Example: 'https://chatwithrandoms-backend.onrender.com'
+    // ────────────────────────────────────────────────
 
     const nameScreen = document.getElementById('name-screen');
     const chat = document.getElementById('chat');
@@ -48,13 +154,14 @@
     const messages = document.getElementById('messages');
     const input = document.getElementById('input');
     const online = document.getElementById('online');
+    const imageUpload = document.getElementById('image-upload');
 
     function join() {
       const name = nameInput.value.trim();
       if (!name) return alert('Gotta enter a name bro!');
       socket.emit('join', name);
       nameScreen.style.display = 'none';
-      chat.style.display = 'block';
+      chat.style.display = 'flex';
     }
 
     function sendMessage() {
@@ -65,25 +172,72 @@
       }
     }
 
+    // Image upload handler
+    imageUpload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file || !file.type.startsWith('image/')) return;
+
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Image too big! Max 2MB.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        socket.emit('image', {
+          buffer: event.target.result,  // ArrayBuffer
+          mime: file.type
+        });
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
     input.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') sendMessage();
     });
 
+    // Receive single message (text or image)
     socket.on('message', (data) => {
+      appendMessage(data);
+    });
+
+    // Receive chat history when joining
+    socket.on('history', (history) => {
+      history.forEach(appendMessage);
+    });
+
+    function appendMessage(data) {
       const li = document.createElement('li');
+
       if (data.system) {
         li.classList.add('system');
         li.textContent = data.text;
+      } else if (data.isImage) {
+        const img = document.createElement('img');
+        img.src = `data:${data.mime};base64,${arrayBufferToBase64(data.image)}`;
+        li.appendChild(document.createTextNode(`${data.username}: `));
+        li.appendChild(img);
       } else {
         li.textContent = `${data.username}: ${data.text}`;
       }
+
       messages.appendChild(li);
       messages.scrollTop = messages.scrollHeight;
-    });
+    }
 
     socket.on('online', (count) => {
       online.textContent = `Online: ${count}`;
     });
+
+    // Helper: ArrayBuffer → base64 for img src
+    function arrayBufferToBase64(buffer) {
+      let binary = '';
+      const bytes = new Uint8Array(buffer);
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    }
   </script>
 </body>
 </html>
