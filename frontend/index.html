@@ -44,7 +44,9 @@
     #header { 
       background:#1a1a1a; 
       padding:12px; 
-      text-align:center; 
+      display:flex; 
+      justify-content:space-between; 
+      align-items:center; 
       border-bottom:1px solid #333; 
     }
     #messages { 
@@ -56,26 +58,51 @@
       background:#000; 
     }
     #messages li { 
-      margin:8px 0; 
-      padding:10px 14px; 
+      display:flex; 
+      align-items:flex-start; 
+      margin:12px 0; 
+      padding:8px 12px; 
       border-radius:12px; 
-      max-width:80%; 
+      background:#333; 
+      max-width:85%; 
       word-wrap:break-word; 
     }
-    #messages .system { 
-      background:#333; 
-      color:#aaa; 
-      text-align:center; 
-      font-style:italic; 
-      margin:15px auto; 
-      width:fit-content; 
-      padding:8px 16px; 
+    #messages li.me { 
+      margin-left:auto; 
+      background:#007bff; 
+      color:white; 
     }
-    #messages img { 
-      max-width:300px; 
-      border-radius:8px; 
-      margin-top:6px; 
-      display:block; 
+    #messages .avatar { 
+      width:40px; 
+      height:40px; 
+      border-radius:50%; 
+      margin-right:12px; 
+      object-fit:cover; 
+      flex-shrink:0; 
+      border:2px solid #555; 
+    }
+    #messages .content { flex:1; }
+    #messages .username { font-weight:bold; margin-right:8px; }
+    #messages img.chat-img { max-width:280px; border-radius:8px; margin-top:6px; display:block; }
+    #messages .delete-btn { 
+      background:none; 
+      border:none; 
+      color:#ff6b6b; 
+      font-size:18px; 
+      cursor:pointer; 
+      margin-left:8px; 
+      opacity:0.7; 
+    }
+    #messages .delete-btn:hover { opacity:1; }
+    #messages .system { 
+      margin:20px auto; 
+      width:fit-content; 
+      background:#444; 
+      color:#aaa; 
+      font-style:italic; 
+      padding:10px 20px; 
+      border-radius:20px; 
+      text-align:center; 
     }
     #input-area { 
       display:flex; 
@@ -85,17 +112,14 @@
     }
     #input { 
       flex:1; 
-      padding:12px; 
+      padding:12px 16px; 
       border:none; 
       border-radius:20px 0 0 20px; 
       background:#333; 
       color:#eee; 
       font-size:16px; 
     }
-    #input:focus { 
-      outline:none; 
-      background:#444; 
-    }
+    #input:focus { outline:none; background:#444; }
     button { 
       padding:12px 20px; 
       background:#007bff; 
@@ -103,38 +127,41 @@
       color:white; 
       cursor:pointer; 
       font-size:16px; 
-    }
-    #image-btn { 
-      background:#444; 
-      border-radius:0 20px 20px 0; 
       margin-left:8px; 
     }
-    #online { 
-      color:#0f0; 
-      font-weight:bold; 
+    #reset-profile { 
+      background:#444; 
+      font-size:14px; 
+      padding:8px 16px; 
     }
+    #online { color:#0f0; font-weight:bold; }
     h1 { margin:0 0 20px 0; }
-    input[type="text"], button { border-radius:8px; }
+    input[type="file"] { margin:15px 0; display:block; }
   </style>
 </head>
 <body>
   <div id="container">
     <div id="name-screen">
       <h1>ChatWithRandoms.com</h1>
-      <p>Enter a name to start chatting with random people worldwide!</p>
-      <input id="name" type="text" placeholder="Your name..." required style="padding:12px; width:280px; margin:10px; font-size:16px;" />
-      <button onclick="join()" style="padding:12px 30px; font-size:18px;">Join Chat</button>
+      <p>Set your name + optional pic (saved for next time!)</p>
+      <input id="name" type="text" placeholder="Your name..." required style="padding:12px; width:280px; font-size:16px;" />
+      <label style="margin:15px 0; color:#ccc;">
+        Profile Picture (optional, <200KB best):
+        <input type="file" id="avatar-upload" accept="image/*" />
+      </label>
+      <button onclick="joinOrAuto()" style="padding:12px 40px; font-size:18px;">Join / Continue Chat</button>
     </div>
 
     <div id="chat">
       <div id="header">
         <div id="online">Online: 0</div>
+        <button id="reset-profile" onclick="resetProfile()">Change Profile</button>
       </div>
       <ul id="messages"></ul>
       <div id="input-area">
         <input id="input" autocomplete="off" placeholder="Type a message and hit Enter..." />
         <input type="file" id="image-upload" accept="image/*" style="display:none;" />
-        <button id="image-btn" onclick="document.getElementById('image-upload').click()">📷</button>
+        <button onclick="document.getElementById('image-upload').click()">📷</button>
         <button onclick="sendMessage()">Send</button>
       </div>
     </div>
@@ -142,26 +169,69 @@
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
-    
-    
+    // REPLACE WITH YOUR ACTUAL RENDER BACKEND URL
     const socket = io('https://chat-randoms-backend.onrender.com/');
-    
-    
 
     const nameScreen = document.getElementById('name-screen');
     const chat = document.getElementById('chat');
     const nameInput = document.getElementById('name');
+    const avatarUpload = document.getElementById('avatar-upload');
     const messages = document.getElementById('messages');
     const input = document.getElementById('input');
     const online = document.getElementById('online');
     const imageUpload = document.getElementById('image-upload');
 
-    function join() {
-      const name = nameInput.value.trim();
-      if (!name) return alert('Gotta enter a name bro!');
-      socket.emit('join', name);
+    let myUsername = localStorage.getItem('chatUsername') || '';
+    let myAvatar = localStorage.getItem('chatAvatar') || '';  // base64 data URL
+
+    // Auto-join if profile already saved
+    window.addEventListener('load', () => {
+      if (myUsername) {
+        autoJoin();
+      }
+    });
+
+    function autoJoin() {
+      socket.emit('join', myUsername);
       nameScreen.style.display = 'none';
       chat.style.display = 'flex';
+    }
+
+    function joinOrAuto() {
+      const name = nameInput.value.trim();
+      if (!name) return alert('Name required!');
+
+      myUsername = name;
+      localStorage.setItem('chatUsername', myUsername);
+
+      const file = avatarUpload.files[0];
+      if (file && file.type.startsWith('image/')) {
+        if (file.size > 200 * 1024) {
+          alert('Pic too big! Under 200KB please.');
+        } else {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            myAvatar = e.target.result;  // data:image/...;base64,...
+            localStorage.setItem('chatAvatar', myAvatar);
+            proceedJoin();
+          };
+          reader.readAsDataURL(file);
+          return;
+        }
+      }
+      proceedJoin();
+    }
+
+    function proceedJoin() {
+      socket.emit('join', myUsername);
+      nameScreen.style.display = 'none';
+      chat.style.display = 'flex';
+    }
+
+    function resetProfile() {
+      localStorage.removeItem('chatUsername');
+      localStorage.removeItem('chatAvatar');
+      location.reload();  // Refresh to show name screen again
     }
 
     function sendMessage() {
@@ -172,20 +242,17 @@
       }
     }
 
-    
     imageUpload.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file || !file.type.startsWith('image/')) return;
-
       if (file.size > 2 * 1024 * 1024) {
         alert('Image too big! Max 2MB.');
         return;
       }
-
       const reader = new FileReader();
       reader.onload = (event) => {
         socket.emit('image', {
-          buffer: event.target.result,  
+          buffer: event.target.result,  // ArrayBuffer
           mime: file.type
         });
       };
@@ -196,40 +263,67 @@
       if (e.key === 'Enter') sendMessage();
     });
 
-    
-    socket.on('message', (data) => {
-      appendMessage(data);
-    });
-
-    
-    socket.on('history', (history) => {
-      history.forEach(appendMessage);
-    });
-
-    function appendMessage(data) {
+    function appendMessage(data, isHistory = false) {
       const li = document.createElement('li');
+      const isMe = data.username === myUsername;
+      if (isMe) li.classList.add('me');
 
       if (data.system) {
         li.classList.add('system');
         li.textContent = data.text;
-      } else if (data.isImage) {
-        const img = document.createElement('img');
-        img.src = `data:${data.mime};base64,${arrayBufferToBase64(data.image)}`;
-        li.appendChild(document.createTextNode(`${data.username}: `));
-        li.appendChild(img);
       } else {
-        li.textContent = `${data.username}: ${data.text}`;
+        // Avatar (use sender's if sent, fallback to default; for now client-only so use placeholder or own if me)
+        const avatarImg = document.createElement('img');
+        avatarImg.classList.add('avatar');
+        avatarImg.src = (isMe && myAvatar) ? myAvatar : 'https://via.placeholder.com/40?text=' + (data.username[0] || '?');
+        avatarImg.alt = data.username;
+        li.appendChild(avatarImg);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.classList.add('content');
+
+        const userSpan = document.createElement('span');
+        userSpan.classList.add('username');
+        userSpan.textContent = data.username;
+        contentDiv.appendChild(userSpan);
+
+        if (data.isImage) {
+          const img = document.createElement('img');
+          img.classList.add('chat-img');
+          img.src = `data:${data.mime};base64,${arrayBufferToBase64(data.image)}`;
+          contentDiv.appendChild(img);
+        } else {
+          contentDiv.appendChild(document.createTextNode(` ${data.text}`));
+        }
+
+        li.appendChild(contentDiv);
+
+        // Delete for own messages
+        if (isMe && !data.isImage) {
+          const delBtn = document.createElement('button');
+          delBtn.classList.add('delete-btn');
+          delBtn.textContent = '×';
+          delBtn.onclick = () => li.remove();
+          li.appendChild(delBtn);
+        }
       }
 
       messages.appendChild(li);
-      messages.scrollTop = messages.scrollHeight;
+
+      // Smooth scroll only if near bottom or new message
+      const nearBottom = messages.scrollHeight - messages.scrollTop - messages.clientHeight < 100;
+      if (nearBottom || !isHistory) {
+        messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
+      }
     }
+
+    socket.on('message', (data) => appendMessage(data));
+    socket.on('history', (history) => history.forEach(d => appendMessage(d, true)));
 
     socket.on('online', (count) => {
       online.textContent = `Online: ${count}`;
     });
 
-    
     function arrayBufferToBase64(buffer) {
       let binary = '';
       const bytes = new Uint8Array(buffer);
