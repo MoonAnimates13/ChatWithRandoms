@@ -6,7 +6,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 
-const ADMIN_PASSWORD = 'SuperSecretAdminCode2025!!!'; // ← CHANGE THIS TO SOMETHING ONLY YOU KNOW
+const ADMIN_PASSWORD = 'SuperSecretAdminCode2025!!!'; // ← this is your admin password
 
 const bannedUsernames = new Set();
 const bannedIPs = new Set();
