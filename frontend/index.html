@@ -131,7 +131,7 @@
       socket.emit('join', { name: myUsername, avatarURL: myAvatarURL });
       nameScreen.style.display = 'none';
       chat.style.display = 'flex';
-      checkAdminStatus();
+      updateAdminUI(); // hidden until keybind
     }
 
     function joinOrAuto() {
@@ -144,31 +144,41 @@
       socket.emit('join', { name: myUsername, avatarURL: myAvatarURL });
       nameScreen.style.display = 'none';
       chat.style.display = 'flex';
-      checkAdminStatus();
+      updateAdminUI();
     }
 
-    function checkAdminStatus() {
-      const password = prompt('Admin access code (leave blank if not admin):');
+    // Keybind: Ctrl + Shift + A to open admin prompt
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        openAdminPrompt();
+      }
+    });
+
+    function openAdminPrompt() {
+      const password = prompt('Enter admin access code:');
       if (password) {
         socket.emit('verify-admin', password, (success) => {
           isAdmin = success;
           updateAdminUI();
-          if (success) console.log('Admin access granted');
+          if (success) {
+            addSystemMessage('Admin access granted');
+          } else {
+            alert('Incorrect code');
+          }
         });
-      } else {
-        isAdmin = false;
-        updateAdminUI();
       }
     }
 
     function updateAdminUI() {
-      document.getElementById('clear-chat-btn').style.display = isAdmin ? 'inline-block' : 'none';
-      document.getElementById('chaos-toggle-btn').style.display = isAdmin ? 'inline-block' : 'none';
-      document.getElementById('tempo-toggle-btn').style.display = isAdmin ? 'inline-block' : 'none';
-      document.getElementById('ban-btn').style.display = isAdmin ? 'inline-block' : 'none';
-      document.getElementById('unban-btn').style.display = isAdmin ? 'inline-block' : 'none';
-      document.getElementById('ban-username-input').style.display = isAdmin ? 'inline-block' : 'none';
-      document.getElementById('admin-ban-panel').style.display = isAdmin ? 'block' : 'none';
+      const adminElements = [
+        'clear-chat-btn', 'chaos-toggle-btn', 'tempo-toggle-btn',
+        'ban-btn', 'unban-btn', 'ban-username-input', 'admin-ban-panel'
+      ];
+      adminElements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = isAdmin ? (id === 'admin-ban-panel' ? 'block' : 'inline-block') : 'none';
+      });
     }
 
     function adminAction(action) {
@@ -197,7 +207,7 @@
         if (tempoActive) {
           tempoOverlay.style.display = 'flex';
           tempoAudio.currentTime = 0;
-          tempoAudio.play().catch(e => console.log('Audio play blocked:', e));
+          tempoAudio.play().catch(e => console.log('Audio blocked:', e));
           setTimeout(() => {
             tempoOverlay.style.animation = 'explodeTempo 1.5s forwards';
             setTimeout(() => {
