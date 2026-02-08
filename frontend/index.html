@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChatWithRandoms.com</title>
+  <style>
+    body { margin:0; font-family: Arial, sans-serif; background:#111; color:#eee; }
+    #container { max-width:700px; margin:20px auto; padding:20px; background:#222; border-radius:10px; }
+    #name-screen { text-align:center; }
+    #chat { display:none; }
+    #messages { list-style:none; padding:0; height:400px; overflow-y:auto; border:1px solid #444; margin-bottom:10px; background:#000; border-radius:5px; }
+    #messages li { padding:8px 12px; margin:5px; border-radius:5px; }
+    #messages .system { background:#333; color:#aaa; text-align:center; font-style:italic; }
+    #input-area { display:flex; }
+    #input { flex:1; padding:12px; border:none; border-radius:5px 0 0 5px; }
+    button { padding:12px 20px; background:#007bff; border:none; color:white; border-radius:0 5px 5px 0; cursor:pointer; }
+    #online { text-align:center; color:#0f0; margin-bottom:10px; }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="name-screen">
+      <h1>ChatWithRandoms.com</h1>
+      <p>Enter a name to chat with random people worldwide!</p>
+      <input id="name" type="text" placeholder="Your name..." required />
+      <button onclick="join()">Join</button>
+    </div>
+
+    <div id="chat">
+      <div id="online">Online: 0</div>
+      <ul id="messages"></ul>
+      <div id="input-area">
+        <input id="input" autocomplete="off" placeholder="Type a message and hit Enter..." />
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    // REPLACE THIS WITH YOUR RENDER BACKEND URL AFTER DEPLOY (e.g. https://yourapp.onrender.com)
+    const socket = io('YOUR_RENDER_BACKEND_URL_HERE');
+
+    const nameScreen = document.getElementById('name-screen');
+    const chat = document.getElementById('chat');
+    const nameInput = document.getElementById('name');
+    const messages = document.getElementById('messages');
+    const input = document.getElementById('input');
+    const online = document.getElementById('online');
+
+    function join() {
+      const name = nameInput.value.trim();
+      if (!name) return alert('Gotta enter a name bro!');
+      socket.emit('join', name);
+      nameScreen.style.display = 'none';
+      chat.style.display = 'block';
+    }
+
+    function sendMessage() {
+      const msg = input.value.trim();
+      if (msg) {
+        socket.emit('chat message', msg);
+        input.value = '';
+      }
+    }
+
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    socket.on('message', (data) => {
+      const li = document.createElement('li');
+      if (data.system) {
+        li.classList.add('system');
+        li.textContent = data.text;
+      } else {
+        li.textContent = `${data.username}: ${data.text}`;
+      }
+      messages.appendChild(li);
+      messages.scrollTop = messages.scrollHeight;
+    });
+
+    socket.on('online', (count) => {
+      online.textContent = `Online: ${count}`;
+    });
+  </script>
+</body>
+</html>
