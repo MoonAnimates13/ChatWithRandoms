@@ -5,40 +5,164 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ChatWithRandoms.com</title>
   <style>
-    body { margin:0; font-family: Arial, sans-serif; background:#111; color:#eee; height:100vh; overflow:hidden; }
-    #container { width:100%; max-width:720px; height:100vh; background:#222; margin:0 auto; display:flex; flex-direction:column; }
-    #name-screen { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; }
-    #chat { flex:1; display:flex; flex-direction:column; display:none; }
-    #header { background:#1a1a1a; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; }
-    #messages { flex:1; list-style:none; padding:15px; margin:0; overflow-y:auto; background:#000; scroll-behavior:smooth; }
-    #messages li { display:flex; align-items:flex-start; margin:10px 0; padding:10px 14px; border-radius:12px; background:#333; max-width:85%; word-wrap:break-word; }
-    #messages li.me { margin-left:auto; background:#007bff; color:white; }
-    #messages .avatar { width:38px; height:38px; border-radius:50%; margin-right:10px; object-fit:cover; flex-shrink:0; border:2px solid #555; }
-    #messages .content { flex:1; line-height:1.4; }
-    #messages .username { font-weight:bold; margin-right:6px; }
-    #messages img.chat-img { max-width:260px; border-radius:8px; margin-top:6px; display:block; }
-    #messages .delete-btn { background:none; border:none; color:#ff7777; font-size:20px; cursor:pointer; margin-left:8px; opacity:0.6; align-self:center; }
-    #messages .delete-btn:hover { opacity:1; }
-    #messages .system { margin:20px auto; width:fit-content; background:#444; color:#bbb; font-style:italic; padding:8px 18px; border-radius:20px; text-align:center; }
-    #input-area { display:flex; padding:12px 16px; background:#1a1a1a; border-top:1px solid #333; gap:8px; }
-    #input { flex:1; padding:12px 16px; border:none; border-radius:24px; background:#2a2a2a; color:#eee; font-size:16px; }
-    #input:focus { outline:none; background:#333; }
-    button { padding:12px 18px; background:#007bff; border:none; color:white; cursor:pointer; border-radius:24px; font-size:15px; white-space:nowrap; }
-    #image-btn { background:#444; }
-    #clear-chat-btn { background:#d32f2f; display:none; }
-    #reset-profile { background:#555; font-size:13px; padding:8px 14px; }
-    #online { color:#4caf50; font-weight:bold; }
-    h1 { margin:0 0 20px 0; }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, Arial, sans-serif;
+      background: #111;
+      color: #eee;
+    }
+    #container {
+      width: 100%;
+      max-width: 720px;
+      height: 100vh;
+      margin: 0 auto;
+      background: #222;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #name-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+      gap: 12px;
+    }
+    #chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      display: none;
+      overflow: hidden;
+    }
+    #header {
+      background: #1a1a1a;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #333;
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 16px;
+      margin: 0;
+      background: #000;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
+    #messages::-webkit-scrollbar { width: 8px; }
+    #messages::-webkit-scrollbar-track { background: transparent; }
+    #messages::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+    #messages li {
+      display: flex;
+      align-items: flex-start;
+      margin: 12px 0;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: #333;
+      max-width: 85%;
+      word-wrap: break-word;
+      line-height: 1.4;
+    }
+    #messages li.me {
+      margin-left: auto;
+      background: #007bff;
+      color: white;
+    }
+    #messages .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 12px;
+      object-fit: cover;
+      flex-shrink: 0;
+      border: 2px solid #555;
+    }
+    #messages .content { flex: 1; }
+    #messages .username { font-weight: bold; margin-right: 6px; }
+    #messages img.chat-img { max-width: 280px; border-radius: 10px; margin-top: 8px; display: block; }
+    #messages .delete-btn {
+      background: none;
+      border: none;
+      color: #ff7777;
+      font-size: 22px;
+      cursor: pointer;
+      margin-left: 10px;
+      opacity: 0.7;
+    }
+    #messages .delete-btn:hover { opacity: 1; }
+    #messages .system {
+      margin: 20px auto;
+      padding: 10px 20px;
+      background: #444;
+      color: #ccc;
+      font-style: italic;
+      border-radius: 20px;
+      text-align: center;
+      font-size: 14px;
+    }
+    #input-area {
+      display: flex;
+      padding: 12px 16px;
+      background: #1a1a1a;
+      border-top: 1px solid #333;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    #input {
+      flex: 1;
+      padding: 14px 18px;
+      border: none;
+      border-radius: 30px;
+      background: #2a2a2a;
+      color: #eee;
+      font-size: 16px;
+    }
+    #input:focus { outline: none; background: #333; }
+    button {
+      padding: 14px 20px;
+      background: #007bff;
+      border: none;
+      color: white;
+      cursor: pointer;
+      border-radius: 30px;
+      font-size: 15px;
+    }
+    #image-btn { background: #444; }
+    #clear-chat-btn { background: #d32f2f; display: none; }
+    #reset-profile { background: #555; font-size: 13px; padding: 8px 14px; }
+    #online { color: #4caf50; font-weight: bold; }
+    input[type="text"] {
+      padding: 14px 18px;
+      border: none;
+      border-radius: 30px;
+      width: 300px;
+      font-size: 16px;
+      background: #333;
+      color: white;
+    }
   </style>
 </head>
 <body>
   <div id="container">
     <div id="name-screen">
       <h1>ChatWithRandoms.com</h1>
-      <p>Enter name + direct image URL (everyone sees avatar)</p>
-      <input id="name" type="text" placeholder="Your name..." style="padding:12px; width:280px; font-size:16px; margin:8px 0;" />
-      <input id="avatar-url" type="text" placeholder="https://i.imgur.com/yourpic.jpg (optional)" style="padding:12px; width:280px; font-size:16px;" />
-      <button onclick="joinOrAuto()" style="padding:14px 50px; font-size:18px; margin-top:20px;">Join / Continue</button>
+      <p>Enter your name + avatar URL (everyone will see it)</p>
+      <input id="name" type="text" placeholder="Your name..." />
+      <input id="avatar-url" type="text" placeholder="https://i.imgur.com/abc123.jpg (optional)" />
+      <button onclick="joinOrAuto()">Join / Continue</button>
     </div>
 
     <div id="chat">
@@ -51,9 +175,9 @@
       </div>
       <ul id="messages"></ul>
       <div id="input-area">
-        <input id="input" autocomplete="off" placeholder="Type a message and hit Enter..." />
+        <input id="input" autocomplete="off" placeholder="Type a message..." />
         <input type="file" id="image-upload" accept="image/*" style="display:none;" />
-        <button id="image-btn" onclick="document.getElementById('image-upload').click()">📷</button>
+        <button id="image-btn" onclick="document.getElementById('image-upload').click()">Photo</button>
         <button onclick="sendMessage()">Send</button>
       </div>
     </div>
@@ -61,13 +185,12 @@
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
-    const socket = io('https://chat-randoms-backend.onrender.com/');  // ← UPDATE THIS
+    const socket = io('https://chat-randoms-backend.onrender.com/'); // ← CHANGE THIS
 
     const ADMIN_SECRET = 'Admin-87a6d987asdt8yaguksdghfas7d';
 
     let myUsername = localStorage.getItem('chatUsername') || '';
     let myAvatarURL = localStorage.getItem('chatAvatarURL') || '';
-    let chatCleared = false;
 
     const nameScreen = document.getElementById('name-screen');
     const chat = document.getElementById('chat');
@@ -79,7 +202,7 @@
     const imageUpload = document.getElementById('image-upload');
     const clearChatBtn = document.getElementById('clear-chat-btn');
 
-    window.addEventListener('load', () => { if (myUsername) autoJoin(); });
+    if (myUsername) autoJoin();
 
     function autoJoin() {
       socket.emit('join', { name: myUsername, avatarURL: myAvatarURL });
@@ -93,15 +216,12 @@
       if (!name) return alert('Name required!');
       myUsername = name;
       myAvatarURL = avatarUrlInput.value.trim() || '';
-
       localStorage.setItem('chatUsername', myUsername);
       if (myAvatarURL) localStorage.setItem('chatAvatarURL', myAvatarURL);
-
       socket.emit('join', { name: myUsername, avatarURL: myAvatarURL });
       nameScreen.style.display = 'none';
       chat.style.display = 'flex';
       checkAdmin();
-      chatCleared = false;
     }
 
     function checkAdmin() {
@@ -109,16 +229,14 @@
     }
 
     function clearAllChats() {
-      if (confirm('Clear for everyone?')) socket.emit('admin-clear-chat');
+      if (confirm('Clear chat for EVERYONE right now?')) {
+        socket.emit('admin-clear-chat');
+      }
     }
 
     socket.on('clear-chat', () => {
       messages.innerHTML = '';
-      chatCleared = true;
-      const li = document.createElement('li');
-      li.classList.add('system');
-      li.textContent = 'Chat was cleared by an admin.';
-      messages.appendChild(li);
+      addSystemMessage('Chat cleared by admin');
       messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
     });
 
@@ -130,46 +248,54 @@
 
     function sendMessage() {
       const msg = input.value.trim();
-      if (msg) { socket.emit('chat message', msg); input.value = ''; }
+      if (msg) {
+        socket.emit('chat message', msg);
+        input.value = '';
+      }
     }
 
-    imageUpload.addEventListener('change', (e) => {
+    imageUpload.addEventListener('change', e => {
       const file = e.target.files[0];
       if (!file || file.size > 2*1024*1024) return alert('Max 2MB');
       const reader = new FileReader();
-      reader.onload = (ev) => socket.emit('image', { buffer: ev.target.result, mime: file.type });
+      reader.onload = ev => socket.emit('image', { buffer: ev.target.result, mime: file.type });
       reader.readAsArrayBuffer(file);
     });
 
     input.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
 
+    function addSystemMessage(text) {
+      const li = document.createElement('li');
+      li.className = 'system';
+      li.textContent = text;
+      messages.appendChild(li);
+    }
+
     function shouldAutoScroll() {
-      return (messages.scrollHeight - messages.scrollTop - messages.clientHeight) < 400;
+      return (messages.scrollHeight - messages.scrollTop - messages.clientHeight) < 500;
     }
 
     function appendMessage(data, isHistory = false) {
-      if (chatCleared && !data.system) return;  // Block new messages until re-join after clear
-
       const li = document.createElement('li');
       if (data.username === myUsername) li.classList.add('me');
 
       if (data.system) {
-        li.classList.add('system');
+        li.className = 'system';
         li.textContent = data.text;
       } else {
         const avatar = document.createElement('img');
-        avatar.classList.add('avatar');
-        avatar.src = data.avatarURL || `https://via.placeholder.com/38?text=${data.username[0]||'?'}`;
-        avatar.onerror = () => avatar.src = 'https://via.placeholder.com/38?text=?';
+        avatar.className = 'avatar';
+        avatar.src = data.avatarURL || `https://via.placeholder.com/40/333/fff?text=${data.username[0]||'?'}`;
+        avatar.onerror = () => avatar.src = 'https://via.placeholder.com/40/333/fff?text=?';
         li.appendChild(avatar);
 
         const content = document.createElement('div');
-        content.classList.add('content');
+        content.className = 'content';
         content.innerHTML = `<span class="username">${data.username}</span> `;
         if (data.isImage) {
           const img = document.createElement('img');
-          img.classList.add('chat-img');
-          img.src = `data:${data.mime};base64,${arrayBufferToBase64(data.image)}`;
+          img.className = 'chat-img';
+          img.src = `data:${data.mime};base64,${btoa(String.fromCharCode(...new Uint8Array(data.image)))}`;
           content.appendChild(img);
         } else {
           content.appendChild(document.createTextNode(data.text));
@@ -178,7 +304,7 @@
 
         if (data.username === myUsername && !data.isImage) {
           const del = document.createElement('button');
-          del.classList.add('delete-btn');
+          del.className = 'delete-btn';
           del.textContent = '×';
           del.onclick = () => li.remove();
           li.appendChild(del);
@@ -188,23 +314,13 @@
       messages.appendChild(li);
 
       if (!isHistory || shouldAutoScroll()) {
-        setTimeout(() => {
-          messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
-        }, isHistory ? 80 : 0);
+        setTimeout(() => messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' }), isHistory ? 50 : 0);
       }
     }
 
     socket.on('message', appendMessage);
-    socket.on('history', h => { h.forEach(d => appendMessage(d, true)); chatCleared = false; });
-
+    socket.on('history', h => h.forEach(m => appendMessage(m, true)));
     socket.on('online', c => online.textContent = `Online: ${c}`);
-
-    function arrayBufferToBase64(buffer) {
-      let binary = '';
-      const bytes = new Uint8Array(buffer);
-      for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-      return btoa(binary);
-    }
   </script>
 </body>
 </html>
