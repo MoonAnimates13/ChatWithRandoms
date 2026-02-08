@@ -9,51 +9,51 @@ const io = new Server(server, {
 });
 
 let onlineUsers = 0;
-const recentMessages = [];          // ← New: array for last N messages
-const MAX_HISTORY = 100;            // Keep last 100 messages (adjust as needed)
+const recentMessages = [];          
+const MAX_HISTORY = 100;            
 
 io.on('connection', (socket) => {
   console.log('A user connected');
   onlineUsers++;
   io.emit('online', onlineUsers);
 
-  // When user joins with name
+  
   socket.on('join', (name) => {
     socket.username = name || 'Anonymous';
     io.emit('message', { system: true, text: `${socket.username} joined the chat!` });
 
-    // ← New: Send recent history ONLY to this new user
+    
     if (recentMessages.length > 0) {
       socket.emit('history', recentMessages);
     }
   });
 
-  // Text message
+  
   socket.on('chat message', (msg) => {
     if (socket.username && msg.trim()) {
       const messageData = { username: socket.username, text: msg.trim(), isImage: false };
       io.emit('message', messageData);
 
-      // Save to history
+      
       recentMessages.push(messageData);
       if (recentMessages.length > MAX_HISTORY) {
-        recentMessages.shift();  // Remove oldest
+        recentMessages.shift();  
       }
     }
   });
 
-  // ← New: Image upload (binary)
-  socket.on('image', (data) => {  // data = { buffer: ArrayBuffer, mime: 'image/png' }
+  
+  socket.on('image', (data) => {  
     if (socket.username) {
       const messageData = {
         username: socket.username,
-        image: data.buffer,   // Binary data
+        image: data.buffer,   
         mime: data.mime,
         isImage: true
       };
       io.emit('message', messageData);
 
-      // Save to history (store binary – fine for small images / short history)
+      
       recentMessages.push(messageData);
       if (recentMessages.length > MAX_HISTORY) {
         recentMessages.shift();
