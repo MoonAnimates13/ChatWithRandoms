@@ -174,7 +174,6 @@
       white-space: nowrap;
     }
     #spam-toast.visible { opacity: 1; }
-
     #chaos-overlay {
       position: fixed;
       top: 0; left: 0;
@@ -188,19 +187,22 @@
     #chaos-overlay.active { display: block; }
     .krater {
       position: absolute;
-      background: url('https://i.imgur.com/WbLTEYX') center/contain no-repeat;
-      filter: drop-shadow(0 0 40px #ff00ff);
-      opacity: 0.9;
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: drop-shadow(0 0 30px #00ff9d) drop-shadow(0 0 60px #ff00ff);
+      opacity: 0.85;
+      pointer-events: none;
     }
     @keyframes kraterFly {
-      0%   { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 0.9; }
+      0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 0.9; }
       100% { transform: translate(var(--dx), var(--dy)) rotate(2160deg) scale(0.2); opacity: 0; }
     }
     #chaos-overlay.strobe {
       animation: krater-strobe 0.04s infinite alternate;
     }
     @keyframes krater-strobe {
-      0%   { background: rgba(255,0,255,0.5); filter: invert(1) brightness(1.6); }
+      0% { background: rgba(255,0,255,0.5); filter: invert(1) brightness(1.6); }
       100% { background: rgba(0,255,0,0.5); filter: invert(0) brightness(0.7); }
     }
     .shake {
@@ -208,12 +210,11 @@
     }
     @keyframes krater-shake {
       0%, 100% { transform: translate(0,0) rotate(0deg) scale(1); }
-      20%  { transform: translate(40px,-40px) rotate(12deg) scale(1.2); }
-      40%  { transform: translate(-40px,40px) rotate(-12deg) scale(0.8); }
-      60%  { transform: translate(40px,40px) rotate(12deg) scale(1.25); }
-      80%  { transform: translate(-40px,-40px) rotate(-12deg) scale(0.75); }
+      20% { transform: translate(40px,-40px) rotate(12deg) scale(1.2); }
+      40% { transform: translate(-40px,40px) rotate(-12deg) scale(0.8); }
+      60% { transform: translate(40px,40px) rotate(12deg) scale(1.25); }
+      80% { transform: translate(-40px,-40px) rotate(-12deg) scale(0.75); }
     }
-
     #tempo-overlay {
       position: fixed;
       top: 0; left: 0;
@@ -250,7 +251,6 @@
       <input id="avatar-url" type="text" placeholder="https://i.imgur.com/abc123.jpg (optional)" />
       <button onclick="joinOrAuto()">Join / Continue</button>
     </div>
-
     <div id="chat">
       <div id="header">
         <div id="online">Online: 0</div>
@@ -271,7 +271,6 @@
       </div>
     </div>
   </div>
-
   <div id="chaos-overlay"></div>
   <div id="tempo-overlay">
     <img id="tempo-img" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPsny6wHtHWi3m5WQqxT8TabGwB-e6NAUteA&s" alt="Not quite my tempo">
@@ -280,12 +279,9 @@
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
     const socket = io('https://chat-randoms-backend.onrender.com');
-
     const ADMIN_SECRET = 'Admin-87a6d987asdt8yaguksdghfas7d';
-
     let myUsername = localStorage.getItem('chatUsername') || '';
     let myAvatarURL = localStorage.getItem('chatAvatarURL') || '';
-
     const nameScreen = document.getElementById('name-screen');
     const chat = document.getElementById('chat');
     const nameInput = document.getElementById('name');
@@ -301,7 +297,6 @@
     const chaosOverlay = document.getElementById('chaos-overlay');
     const tempoOverlay = document.getElementById('tempo-overlay');
     const container = document.getElementById('container');
-
     let chaosActive = false;
     let chaosLevel = 1;
     let kraterInterval;
@@ -397,7 +392,6 @@
     function appendMessage(data, isHistory = false) {
       const li = document.createElement('li');
       if (data.username === myUsername) li.classList.add('me');
-
       if (data.system) {
         li.className = 'system';
         li.textContent = data.text;
@@ -407,7 +401,6 @@
         avatar.src = data.avatarURL || `https://via.placeholder.com/40/333/fff?text=${data.username[0]||'?'}`;
         avatar.onerror = () => avatar.src = 'https://via.placeholder.com/40/333/fff?text=?';
         li.appendChild(avatar);
-
         const content = document.createElement('div');
         content.className = 'content';
         content.innerHTML = `<span class="username">${data.username}</span> `;
@@ -420,7 +413,6 @@
           content.appendChild(document.createTextNode(data.text));
         }
         li.appendChild(content);
-
         if (data.username === myUsername && !data.isImage) {
           const del = document.createElement('button');
           del.className = 'delete-btn';
@@ -429,9 +421,7 @@
           li.appendChild(del);
         }
       }
-
       messages.appendChild(li);
-
       if (!isHistory || shouldAutoScroll()) {
         setTimeout(() => messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' }), isHistory ? 50 : 0);
       }
@@ -444,9 +434,7 @@
     function toggleChaos() {
       chaosActive = !chaosActive;
       chaosToggleBtn.textContent = chaosActive ? 'STOP CHAOS' : 'Toggle Chaos';
-
       socket.emit('admin-toggle-chaos', chaosActive);
-
       if (chaosActive) {
         chaosOverlay.classList.add('active', 'strobe');
         container.classList.add('shake');
@@ -462,35 +450,51 @@
 
     function spawnKraters() {
       chaosOverlay.innerHTML = '';
-      for (let i = 0; i < 50; i++) {
+
+      const kraterImages = [
+        'https://i.kym-cdn.com/photos/images/original/002/347/450/0e9.png',
+        'https://i.kym-cdn.com/photos/images/newsfeed/002/347/457/4d0.png',
+        'https://i.imgur.com/0ZxKx8L.png'
+      ];
+
+      for (let i = 0; i < 40; i++) {
         const krater = document.createElement('div');
         krater.className = 'krater';
-        const size = 80 + Math.random() * 240;
-        krater.style.width = size + 'px';
-        krater.style.height = size + 'px';
+
+        const size = 60 + Math.random() * 220;
+        krater.style.width = `${size}px`;
+        krater.style.height = `${size}px`;
+
+        const randomImg = kraterImages[Math.floor(Math.random() * kraterImages.length)];
+        krater.style.backgroundImage = `url('${randomImg}')`;
 
         const side = Math.floor(Math.random() * 8);
         let startX, startY, dx, dy;
-        if (side === 0) { startX = Math.random()*140; startY = -50; dx = (Math.random()-0.5)*700; dy = 200; }
-        else if (side === 1) { startX = 150; startY = Math.random()*140; dx = -200; dy = (Math.random()-0.5)*700; }
-        else if (side === 2) { startX = Math.random()*140; startY = 150; dx = (Math.random()-0.5)*700; dy = -200; }
-        else if (side === 3) { startX = -50; startY = Math.random()*140; dx = 200; dy = (Math.random()-0.5)*700; }
+        if      (side === 0) { startX = Math.random()*140; startY = -50; dx = (Math.random()-0.5)*700; dy = 200 + Math.random()*400; }
+        else if (side === 1) { startX = 150; startY = Math.random()*140; dx = -200 - Math.random()*400; dy = (Math.random()-0.5)*700; }
+        else if (side === 2) { startX = Math.random()*140; startY = 150; dx = (Math.random()-0.5)*700; dy = -200 - Math.random()*400; }
+        else if (side === 3) { startX = -50; startY = Math.random()*140; dx = 200 + Math.random()*400; dy = (Math.random()-0.5)*700; }
         else if (side === 4) { startX = -50; startY = -50; dx = 200; dy = 200; }
         else if (side === 5) { startX = 150; startY = -50; dx = -200; dy = 200; }
         else if (side === 6) { startX = 150; startY = 150; dx = -200; dy = -200; }
-        else { startX = -50; startY = 150; dx = 200; dy = -200; }
+        else                 { startX = -50; startY = 150; dx = 200; dy = -200; }
 
-        krater.style.left = startX + 'vw';
-        krater.style.top = startY + 'vh';
-        krater.style.setProperty('--dx', dx + 'vw');
-        krater.style.setProperty('--dy', dy + 'vh');
-        krater.style.animation = `kraterFly ${0.8 / chaosLevel}s ease-in-out forwards`;
-        krater.style.animationDelay = `${Math.random() * 0.5}s`;
+        krater.style.left = `${startX}vw`;
+        krater.style.top  = `${startY}vh`;
+        krater.style.setProperty('--dx', `${dx}vw`);
+        krater.style.setProperty('--dy', `${dy}vh`);
+
+        const duration = (1.2 - (chaosLevel * 0.04)).toFixed(2);
+        krater.style.animation = `kraterFly ${duration}s ease-in-out forwards`;
+        krater.style.animationDelay = `${Math.random() * 0.6}s`;
+
         chaosOverlay.appendChild(krater);
       }
 
-      kraterInterval = setTimeout(spawnKraters, 60 / chaosLevel);
-      chaosLevel = Math.min(chaosLevel + 1, 20);
+      const nextSpawnMs = Math.max(400, 1200 - (chaosLevel * 50));
+      kraterInterval = setTimeout(spawnKraters, nextSpawnMs);
+
+      chaosLevel = Math.min(chaosLevel + 1, 18);
     }
 
     socket.on('chaos-toggle', (enable) => {
@@ -512,9 +516,7 @@
     function toggleTempo() {
       tempoActive = !tempoActive;
       tempoToggleBtn.textContent = tempoActive ? 'Stop Tempo' : 'Tempo Meme';
-
       socket.emit('admin-toggle-tempo', tempoActive);
-
       if (tempoActive) {
         tempoOverlay.style.display = 'flex';
         tempoAudio.volume = 1.0;
