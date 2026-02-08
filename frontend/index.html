@@ -143,6 +143,7 @@
     }
     #image-btn { background: #444; }
     #clear-chat-btn { background: #d32f2f; display: none; }
+    #chaos-toggle-btn { background: #ff5722; display: none; }
     #reset-profile { background: #555; font-size: 13px; padding: 8px 14px; }
     #online { color: #4caf50; font-weight: bold; }
     input[type="text"] {
@@ -174,6 +175,47 @@
     #spam-toast.visible {
       opacity: 1;
     }
+    #chaos-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+      overflow: hidden;
+      display: none;
+    }
+    #chaos-overlay.active {
+      display: block;
+    }
+    .worm {
+      position: absolute;
+      width: 100px;
+      height: 100px;
+      background: url('https://static.wikia.nocookie.net/the-zula-patrol/images/d/de/Bula%27s_Spin_Party.png/revision/latest') center/cover no-repeat;
+      animation: flyAndSpin 5s linear infinite;
+    }
+    @keyframes flyAndSpin {
+      0% { transform: translate(-100%, 0) rotate(0deg); }
+      100% { transform: translate(100vw, 100vh) rotate(720deg); }
+    }
+    #chaos-overlay.strobe {
+      animation: strobe 0.5s infinite alternate;
+    }
+    @keyframes strobe {
+      0% { background: rgba(255, 255, 255, 0.1); }
+      100% { background: rgba(0, 0, 0, 0.1); }
+    }
+    .shake {
+      animation: shake 0.5s infinite;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(5px, 5px); }
+      50% { transform: translate(-5px, -5px); }
+      75% { transform: translate(5px, -5px); }
+    }
   </style>
 </head>
 <body>
@@ -191,6 +233,7 @@
         <div id="online">Online: 0</div>
         <div>
           <button id="clear-chat-btn" onclick="clearAllChats()">Clear All Chats</button>
+          <button id="chaos-toggle-btn" onclick="toggleChaos()">Toggle Chaos</button>
           <button id="reset-profile" onclick="resetProfile()">Change Profile</button>
         </div>
       </div>
@@ -204,6 +247,7 @@
       </div>
     </div>
   </div>
+  <div id="chaos-overlay"></div>
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
@@ -223,7 +267,14 @@
     const online = document.getElementById('online');
     const imageUpload = document.getElementById('image-upload');
     const clearChatBtn = document.getElementById('clear-chat-btn');
+    const chaosToggleBtn = document.getElementById('chaos-toggle-btn');
     const spamToast = document.getElementById('spam-toast');
+    const chaosOverlay = document.getElementById('chaos-overlay');
+    const container = document.getElementById('container');
+
+    let chaosActive = false;
+    let chaosIntensity = 1;
+    let chaosInterval;
 
     if (myUsername) autoJoin();
 
@@ -248,7 +299,9 @@
     }
 
     function checkAdmin() {
-      clearChatBtn.style.display = (myUsername === ADMIN_SECRET) ? 'inline-block' : 'none';
+      const isAdmin = (myUsername === ADMIN_SECRET);
+      clearChatBtn.style.display = isAdmin ? 'inline-block' : 'none';
+      chaosToggleBtn.style.display = isAdmin ? 'inline-block' : 'none';
     }
 
     function clearAllChats() {
@@ -359,6 +412,47 @@
     socket.on('message', appendMessage);
     socket.on('history', h => h.forEach(m => appendMessage(m, true)));
     socket.on('online', c => online.textContent = `Online: ${c}`);
+
+    let chaosIntensityInterval;
+    let chaosLevel = 1;
+
+    function toggleChaos() {
+      chaosActive = !chaosActive;
+      chaosToggleBtn.textContent = chaosActive ? 'Stop Chaos' : 'Toggle Chaos';
+
+      if (chaosActive) {
+        chaosOverlay.classList.add('active');
+        chaosOverlay.classList.add('strobe');
+        container.classList.add('shake');
+        addWorm();
+        chaosIntensityInterval = setInterval(increaseChaos, 5000);
+      } else {
+        chaosOverlay.classList.remove('active');
+        chaosOverlay.classList.remove('strobe');
+        container.classList.remove('shake');
+        chaosOverlay.innerHTML = '';
+        clearInterval(chaosIntensityInterval);
+        chaosLevel = 1;
+      }
+    }
+
+    function addWorm() {
+      const worm = document.createElement('div');
+      worm.classList.add('worm');
+      worm.style.left = `${Math.random() * 100}vw`;
+      worm.style.top = `${Math.random() * 100}vh`;
+      worm.style.animationDuration = `${5 / chaosLevel}s`;
+      chaosOverlay.appendChild(worm);
+      setTimeout(() => worm.remove(), 5000);
+      setTimeout(addWorm, 1000 / chaosLevel);
+    }
+
+    function increaseChaos() {
+      chaosLevel += 0.5;
+      chaosOverlay.style.animationDuration = `${0.5 / chaosLevel}s`;
+      container.style.animationDuration = `${0.5 / chaosLevel}s`;
+      addWorm();
+    }
   </script>
 </body>
 </html>
