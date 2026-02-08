@@ -254,8 +254,6 @@
       80% { transform: scale(2.5) rotate(720deg); opacity: 1; }
       100% { transform: scale(5) rotate(1440deg); opacity: 0; }
     }
-
-    /* Right-side admin ban panel */
     #admin-ban-panel {
       position: fixed;
       top: 60px;
@@ -326,7 +324,6 @@
     </div>
   </div>
 
-  <!-- Admin ban list panel (right side, visible only to admin) -->
   <div id="admin-ban-panel">
     <h3>Banned Users & IPs</h3>
     <ul id="ban-list"></ul>
@@ -340,7 +337,7 @@
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
     const socket = io('https://chat-randoms-backend.onrender.com');
-    const ADMIN_SECRET = 'Admin-87a6d987asdt8yaguksdghfas7d!';
+    const ADMIN_SECRET = 'Admin-19671290yds87qatd78012epasgf8d5!!!!';
     let myUsername = localStorage.getItem('chatUsername') || '';
     let myAvatarURL = localStorage.getItem('chatAvatarURL') || '';
     const nameScreen = document.getElementById('name-screen');
@@ -403,13 +400,18 @@
     }
 
     function clearAllChats() {
-      if (confirm('Clear chat for EVERYONE right now?')) socket.emit('admin-clear-chat');
+      if (confirm('Clear chat for EVERYONE right now?')) {
+        socket.emit('admin-clear-chat');
+      }
     }
 
     socket.on('clear-chat', () => {
       messages.innerHTML = '';
       addSystemMessage('Chat cleared by admin');
-      messages.scrollTo({ top: messages.scrollHeight, behavior: 'smooth' });
+      // Force scroll to bottom immediately
+      setTimeout(() => {
+        messages.scrollTop = messages.scrollHeight;
+      }, 50);
     });
 
     function resetProfile() {
@@ -458,6 +460,11 @@
     }
 
     function appendMessage(data, isHistory = false) {
+      // Hide admin join/leave messages from everyone (including admin)
+      if (data.system && (data.text.includes(ADMIN_SECRET) || data.text.includes('joined') || data.text.includes('left'))) {
+        return; // skip rendering
+      }
+
       const li = document.createElement('li');
       if (data.username === myUsername) li.classList.add('me');
       if (data.system) {
